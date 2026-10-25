@@ -1,0 +1,10 @@
+MI JORNADA — PROYECTO ANDROID PARA COMPILAR APK
+
+Este proyecto envuelve la versión web actual de Mi Jornada en una aplicación Android sencilla (WebView).
+
+IMPORTANTE
+- Este archivo es el código fuente del proyecto, NO es todavía un APK instalable.
+- La compilación en la nube requiere una cuenta de GitHub y conexión a Internet.
+- Los registros se guardan localmente dentro de los datos de la aplicación. Desinstalar la app o borrar sus datos puede perderlos; conserva copias si la función de exportación funciona en tu dispositivo.
+- No incluye sincronización automática en la nube ni está publicado en Google Play.
+- La versión actual registra por separado las horas de jornada y las horas que se deben, tal como se definió para el prototipo.
