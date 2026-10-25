@@ -1,0 +1,17 @@
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'es.mijornada.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'es.mijornada.app'
+        minSdk 23
+        targetSdk 28
+        versionCode 1
+        versionName '1.0'
+    }
+}
