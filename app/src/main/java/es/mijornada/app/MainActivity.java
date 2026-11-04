@@ -13,6 +13,7 @@ import android.webkit.WebViewClient;
 public class MainActivity extends Activity {
     private static final int PICK_FILE_REQUEST = 1001;
     private WebView webView;
+    private CloudBridge cloudBridge;
     private ValueCallback<Uri[]> fileCallback;
 
     @Override
@@ -25,7 +26,14 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
 
-        webView.setWebViewClient(new WebViewClient());
+        cloudBridge = new CloudBridge(this, webView);
+        webView.addJavascriptInterface(cloudBridge, "AndroidCloud");
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (cloudBridge != null) cloudBridge.notifyStatus();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
