@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Solo el propietario autenticado puede leer y modificar sus copias.
+    match /users/{userId}/backups/{backupId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId
+        && backupId == 'main';
+    }
+  }
+}
