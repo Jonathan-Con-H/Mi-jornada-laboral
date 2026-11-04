@@ -11,7 +11,24 @@
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Restablecer automático</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
-<section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">La sincronización automática en la nube todavía no está conectada. Guarda una copia fuera del móvil periódicamente.</p><p class="muted" id="backupStatus"></p></div></section>
+<section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">La sincronización automática en la nube todavía no está conectada. Guarda una copia fuera del móvil periódicamente.</p><p class="muted" id="backupStatus"></p></div><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">☁️ Mi cuenta y copia en la nube</h2>
+<p class="muted" id="cloudStatus" role="status">Comprobando si la nube está configurada...</p>
+<div id="cloudLogin" class="hidden">
+ <div class="fields">
+  <label class="field">Correo electrónico<input id="cloudEmail" type="email" autocomplete="username" placeholder="tu-correo@ejemplo.com"></label>
+  <label class="field">Contraseña<input id="cloudPassword" type="password" autocomplete="current-password"></label>
+ </div>
+ <div class="actions"><button class="primary" id="cloudSignIn" type="button">Entrar</button><button class="secondary" id="cloudSignUp" type="button">Crear cuenta</button></div>
+</div>
+<div id="cloudLogged" class="hidden">
+ <p class="muted">Sesión de <strong id="cloudUser"></strong></p>
+ <div class="actions">
+  <button class="primary" id="cloudUpload" type="button">Guardar copia en la nube</button>
+  <button class="secondary" id="cloudDownload" type="button">Recuperar copia de la nube</button>
+  <button class="secondary" id="cloudSignOut" type="button">Cerrar sesión</button>
+ </div>
+ <p class="muted">Tras la primera copia o recuperación, los nuevos cambios se subirán automáticamente mientras tengas Internet. Para cambiar de móvil, inicia sesión y pulsa «Recuperar copia de la nube».</p>
+</div></div></section>
 <div class="foot">Mi Jornada · Versión de prueba · Los datos son personales y se guardan localmente en este navegador.</div></main>
 <script>
 
@@ -41,8 +58,8 @@
   let selected=today();
   let viewDate=new Date();viewDate.setDate(1);
   let sumDate=new Date(viewDate);
-  function save(){localStorage.setItem(KEY,JSON.stringify(data));}
-  function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));}
+  function save(){localStorage.setItem(KEY,JSON.stringify(data));scheduleCloudUpload();}
+  function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));scheduleCloudUpload();}
   function weekShift(s) {
     const d=parse(s),a=parse(anchor);
     const md=new Date(d.getFullYear(),d.getMonth(),d.getDate()-(d.getDay()+6)%7);
@@ -232,6 +249,88 @@
     }catch(e){$("backupStatus").textContent="No se pudo importar: el archivo no parece una copia válida.";}
     ev.target.value="";
   });
+
+  // Almacena una copia privada bajo el usuario autenticado en Firebase.
+  // El primer inicio de sesión nunca sobrescribe datos automáticamente.
+  const CLOUD_SYNC_KEY = "miJornada.cloudAutoUid.v1";
+  let cloudUid = null;
+  let cloudAuto = false;
+  let cloudUploadTimer = null;
+  let cloudRestoreRequested = false;
+  function cloudMessage(message){$("cloudStatus").textContent=message;}
+  function cloudPayload(){return JSON.stringify({app:"Mi Jornada",version:3,exportedAt:new Date().toISOString(),data,automatico:config});}
+  function scheduleCloudUpload(){
+    if(!cloudUid||!cloudAuto||!window.AndroidCloud)return;
+    clearTimeout(cloudUploadTimer);
+    cloudUploadTimer=setTimeout(()=>window.AndroidCloud.upload(cloudPayload()),1400);
+  }
+  function renderCloudAccount(loggedIn){
+    $("cloudLogged").classList.toggle("hidden",!loggedIn);
+    $("cloudLogin").classList.toggle("hidden",loggedIn);
+    if(loggedIn)$("cloudPassword").value="";
+  }
+  window.miCloudEvent=function(event){
+    if(event.type==="unavailable"){
+      cloudUid=null;cloudAuto=false;
+      $("cloudLogged").classList.add("hidden");$("cloudLogin").classList.add("hidden");
+      cloudMessage("La nube está preparada, pero falta conectar este proyecto a Firebase. Tus registros siguen protegidos localmente.");
+    }else if(event.type==="signedout"){
+      cloudUid=null;cloudAuto=false;cloudRestoreRequested=false;
+      renderCloudAccount(false);
+      cloudMessage("Inicia sesión para guardar y recuperar tus jornadas desde otro móvil.");
+    }else if(event.type==="signedin"){
+      try{
+        const user=JSON.parse(event.value);
+        cloudUid=user.uid;
+        cloudAuto=localStorage.getItem(CLOUD_SYNC_KEY)===cloudUid;
+        $("cloudUser").textContent=user.email||"Usuario";
+        renderCloudAccount(true);
+        cloudMessage(cloudAuto?"Copia automática activada para esta cuenta.":"Sesión iniciada. Para activar la copia automática, guarda o recupera una copia.");
+        window.AndroidCloud.download();
+      }catch(e){cloudMessage("No se pudo leer la sesión.");}
+    }else if(event.type==="uploaded"){
+      cloudMessage("Copia guardada en la nube. Los próximos cambios se guardarán automáticamente.");
+    }else if(event.type==="downloaded"){
+      if(!cloudRestoreRequested){
+        if(event.value!==null)cloudMessage(cloudAuto?"Copia disponible en la nube y copia automática activada.":"Existe una copia en la nube. Elige guardarla desde este móvil o recuperarla.");
+        else cloudMessage("Todavía no hay una copia en la nube. Pulsa «Guardar copia en la nube».");
+        return;
+      }
+      cloudRestoreRequested=false;
+      if(event.value===null){cloudMessage("No hay ninguna copia de esta cuenta para recuperar.");return;}
+      let copy;
+      try{copy=JSON.parse(event.value);}catch(e){cloudMessage("La copia de la nube no tiene un formato válido.");return;}
+      if(!copy.data||typeof copy.data!=="object"||Array.isArray(copy.data)){
+        cloudMessage("La copia guardada no contiene jornadas válidas.");return;
+      }
+      if(!confirm("Esto sustituirá las jornadas de este móvil por las de tu cuenta en la nube. Antes exporta una copia JSON si quieres conservar las locales. ¿Continuar?"))return;
+      data=copy.data;
+      if(copy.automatico&&typeof copy.automatico.enabled==="boolean"&&copy.automatico.since)config=copy.automatico;
+      cloudAuto=true;localStorage.setItem(CLOUD_SYNC_KEY,cloudUid);
+      saveConfig();save();syncAutoEntries();
+      renderAuto();renderCalendar();loadEntry();renderSummary();
+      cloudMessage("Jornadas recuperadas de la nube. Copia automática activada.");
+    }else if(event.type==="error"){
+      cloudMessage(event.value||"No se pudo completar la operación en la nube.");
+    }
+  };
+  $("cloudSignIn").onclick=()=>window.AndroidCloud?.signIn($("cloudEmail").value,$("cloudPassword").value);
+  $("cloudSignUp").onclick=()=>window.AndroidCloud?.signUp($("cloudEmail").value,$("cloudPassword").value);
+  $("cloudSignOut").onclick=()=>window.AndroidCloud?.signOut();
+  $("cloudUpload").onclick=()=>{
+    if(!cloudUid)return;
+    if(!confirm("¿Guardar los datos de este móvil en la nube? Si ya había otra copia de esta cuenta, será sustituida."))return;
+    cloudAuto=true;localStorage.setItem(CLOUD_SYNC_KEY,cloudUid);
+    cloudMessage("Guardando copia...");
+    window.AndroidCloud.upload(cloudPayload());
+  };
+  $("cloudDownload").onclick=()=>{
+    if(!cloudUid)return;
+    cloudRestoreRequested=true;cloudMessage("Buscando la copia...");
+    window.AndroidCloud.download();
+  };
+  if(!window.AndroidCloud)cloudMessage("La copia en la nube estará disponible al abrir la aplicación Android configurada con Firebase.");
+
   function tick(){
     const changed=syncAutoEntries();
     if(changed){renderCalendar();if(selected===today())loadEntry();}
