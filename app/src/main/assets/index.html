@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#123a5a"><meta name="description" content="Registro personal de jornada laboral y horas pendientes"><link rel="manifest" href="manifest.webmanifest"><title>Mi Jornada</title>
 <style>
-:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.vacation{border:4px solid #1D4ED8;background:white}.day.holiday{border:4px solid #D4AF37;background:white}.day.vacation.holiday{border:4px solid #D4AF37;box-shadow:inset 0 0 0 4px white,inset 0 0 0 8px #1D4ED8}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 </style></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button></div>
-<section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
-<div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
+<section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span><span><i class="dot" style="background:#1D4ED8"></i>Vacaciones</span><span><i class="dot" style="background:#D4AF37"></i>Festivo</span></div></div>
+<div class="panel"><h2>Vacaciones y festivos</h2><div class="fields"><label class="field">Inicio vacaciones<input type="date" id="vacStart"></label><label class="field">Fin vacaciones<input type="date" id="vacEnd"></label><label class="field">Nombre festivo<input id="holidayName" placeholder="Nombre del festivo"></label></div><div class="actions"><button type="button" id="addVacation" class="primary">Guardar vacaciones</button><button type="button" id="removeVacation" class="secondary">Quitar vacaciones</button><button type="button" id="addHoliday" class="secondary">Marcar festivo</button><button type="button" id="removeHoliday" class="secondary">Quitar festivo</button></div><p class="muted">Vacaciones y festivos requieren confirmación. Selecciona un día del calendario para marcar un festivo.</p></div><div class="panel"><h2>Papelera (30 días)</h2><button type="button" id="deleteDay" class="danger">Eliminar jornada seleccionada</button><div id="trashList"></div></div><div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Restablecer automático</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="cloudView" class="hidden">
@@ -66,8 +66,13 @@
   try{config=JSON.parse(localStorage.getItem(AUTO_KEY)||"null");}catch(e){config=null;}
   if(!config||typeof config.enabled!=="boolean"||!config.since){
     config={enabled:true,since:today()};
-    localStorage.setItem(AUTO_KEY,JSON.stringify(config));
+    localStorage.setItem(AUTO_KEY,JSON.stringify(config));localStorage.setItem(META_KEY,JSON.stringify(meta));
   }
+  const META_KEY="miJornada.meta.v1";
+  let meta;try{meta=JSON.parse(localStorage.getItem(META_KEY)||"{}")||{}}catch(e){meta={}}
+  meta.vacations=meta.vacations||{};meta.holidays=meta.holidays||{};meta.trash=meta.trash||{};
+  function saveMeta(){localStorage.setItem(META_KEY,JSON.stringify(meta));scheduleCloudSave()}
+  function purgeTrash(){let changed=false;for(const [s,item] of Object.entries(meta.trash)){if(Date.now()-Date.parse(item.deletedAt)>=30*86400000){delete meta.trash[s];changed=true}}if(changed)saveMeta()}
   let selected=today();
   let viewDate=new Date();viewDate.setDate(1);
   let sumDate=new Date(viewDate);
@@ -116,7 +121,7 @@
     let changed=false,day=parse(config.since);
     for(let i=0;i<2200&&iso(day)<=current;i++,day.setDate(day.getDate()+1)){
       const s=iso(day),e=autoEntry(s);
-      if(e.kind!=="work"||Object.prototype.hasOwnProperty.call(data,s))continue;
+      if(e.kind!=="work"||meta.vacations[s]||meta.holidays[s]||meta.trash[s]||Object.prototype.hasOwnProperty.call(data,s))continue;
       if(s===current&&nowMins(now)<timeMins(e.start))continue;
       data[s]={...e,auto:true,stopped:false};
       changed=true;
@@ -138,10 +143,10 @@
       const d=new Date(viewDate.getFullYear(),viewDate.getMonth(),n),s=iso(d),v=entry(s),
         el=document.createElement("button");
       el.type="button";
-      el.className="day "+(v.kind==="rest"?"rest":v.shift)+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"");
+      el.className="day "+(v.kind==="rest"?"rest":v.shift)+(meta.vacations[s]?" vacation":"")+(meta.holidays[s]?" holiday":"")+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"");
       let note=v.kind==="rest"?"DESC":v.shift==="morning"?"MAÑ":"TAR";
       if(data[s]&&v.kind==="work")note=v.stopped?"FIN":v.auto?"AUTO":"EDIT";
-      el.innerHTML=`<span>${n}</span><span class="shift">${note}</span>${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
+      el.innerHTML=`<span>${n}</span><span class="shift">${meta.vacations[s]?"VAC":note}</span>${meta.holidays[s]?"<span class=holiday-label>Festivo</span>":""}${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
       el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();});
       root.append(el);
     }
@@ -212,6 +217,13 @@
       "Activo desde el "+fmt(config.since)+". Las jornadas de lunes a viernes se guardan según el turno cuando llega su hora, al abrir la app o volver a ella. Los días sin abrirla se completan al regresar.":
       "Desactivado. No se crearán nuevas jornadas automáticas hasta que lo actives; tus registros anteriores se conservan.";
   }
+  function refreshExtras(){purgeTrash();renderCalendar();loadEntry();renderSummary();renderTrash()}
+  function renderTrash(){$("trashList").innerHTML=Object.entries(meta.trash).map(([s,v])=>'<div class="row"><span>'+fmt(s)+'</span><button type="button" data-restore="'+s+'">Restaurar</button></div>').join("")||"Papelera vacía";document.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=b.dataset.restore;data[s]=meta.trash[s].entry;delete meta.trash[s];save();saveMeta();refreshExtras()})}
+  function changeVacation(remove){const a=$("vacStart").value,b=$("vacEnd").value;if(!a||!b||a>b)return alert("Revisa las fechas.");const days=[];for(let d=parse(a),i=0;i<400&&iso(d)<=b;i++,d.setDate(d.getDate()+1)){const s=iso(d),dow=d.getDay();if(dow!==0&&dow!==6&&!meta.holidays[s])days.push(s)}if(!confirm((remove?"Quitar":"Guardar")+" "+days.length+" días de vacaciones?"))return;days.forEach(s=>{if(remove)delete meta.vacations[s];else{meta.vacations[s]=true;if(data[s]?.auto)delete data[s]}});save();saveMeta();refreshExtras()}
+  $("addVacation").onclick=()=>changeVacation(false);$("removeVacation").onclick=()=>changeVacation(true);
+  $("addHoliday").onclick=()=>{const name=$("holidayName").value.trim();if(!name)return alert("Indica el nombre del festivo.");if(!confirm("Guardar festivo "+fmt(selected)+"?"))return;meta.holidays[selected]=name;if(data[selected]?.auto)delete data[selected];save();saveMeta();refreshExtras()};
+  $("removeHoliday").onclick=()=>{if(!meta.holidays[selected]||!confirm("Quitar festivo?"))return;delete meta.holidays[selected];saveMeta();refreshExtras()};
+  $("deleteDay").onclick=()=>{if(!data[selected])return alert("No hay jornada guardada.");if(!confirm("Eliminar jornada del "+fmt(selected)+"? Podrás recuperarla 30 días."))return;meta.trash[selected]={entry:data[selected],deletedAt:new Date().toISOString()};delete data[selected];save();saveMeta();refreshExtras()};
   $("entryForm").addEventListener("submit",ev=>{
     ev.preventDefault();
     data[selected]={...formEntry(),auto:false,stopped:!!(data[selected]&&data[selected].stopped)};
@@ -225,7 +237,7 @@
     save();renderCalendar();loadEntry();renderSummary();
   });
   $("resetDay").addEventListener("click",()=>{
-    delete data[selected];save();syncAutoEntries();
+    if(data[selected]){meta.trash[selected]={entry:data[selected],deletedAt:new Date().toISOString()};delete data[selected];saveMeta()}save();syncAutoEntries();
     renderCalendar();loadEntry();renderSummary();
   });
   $("toggleAuto").addEventListener("click",()=>{
@@ -244,7 +256,7 @@
     if(b.dataset.tab==="summary")renderSummary();
   }));
   $("exportBtn").onclick=()=>{
-    const blob=new Blob([JSON.stringify({app:"Mi Jornada",version:2,exportedAt:new Date().toISOString(),data,automatico:config},null,2)],{type:"application/json"}),
+    const blob=new Blob([JSON.stringify({app:"Mi Jornada",version:2,exportedAt:new Date().toISOString(),data,automatico:config,meta},null,2)],{type:"application/json"}),
       url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download=`mi-jornada-copia-${today()}.json`;a.click();URL.revokeObjectURL(url);
     $("backupStatus").textContent="Copia exportada. Comprueba que el archivo se haya guardado.";
@@ -255,7 +267,7 @@
       const j=JSON.parse(await file.text());
       if(!j.data||typeof j.data!=="object"||Array.isArray(j.data))throw Error("Formato no válido");
       if(!confirm("Importar sustituirá los registros actuales de este móvil. ¿Continuar?"))return;
-      data=j.data;
+      data=j.data;if(j.meta&&typeof j.meta==="object"){meta=j.meta;saveMeta()}
       if(j.automatico&&typeof j.automatico.enabled==="boolean"&&j.automatico.since){
         config=j.automatico;saveConfig();
       }
@@ -274,7 +286,7 @@
     timer: null
   };
   function snapshot(){
-    return JSON.stringify({app:"Mi Jornada",version:3,data:data,automatico:config});
+    return JSON.stringify({app:"Mi Jornada",version:4,data:data,automatico:config,meta});
   }
   function syncKey(uid){
     return "miJornada.cloud.last.v1."+uid;
@@ -320,6 +332,7 @@
     }
     data=incoming.data;
     config=incoming.automatico;
+    if(incoming.meta&&typeof incoming.meta==="object")meta=incoming.meta;
     localStorage.setItem(KEY,JSON.stringify(data));
     localStorage.setItem(AUTO_KEY,JSON.stringify(config));
     localStorage.setItem(syncKey(cloud.uid),payload);
@@ -461,6 +474,6 @@
   setInterval(tick,60000);
   if("serviceWorker" in navigator&&location.protocol.startsWith("http"))
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
-  syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
+  purgeTrash();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
 
 </script></body></html>
