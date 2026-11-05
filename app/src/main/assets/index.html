@@ -66,11 +66,15 @@
   try{config=JSON.parse(localStorage.getItem(AUTO_KEY)||"null");}catch(e){config=null;}
   if(!config||typeof config.enabled!=="boolean"||!config.since){
     config={enabled:true,since:today()};
-    localStorage.setItem(AUTO_KEY,JSON.stringify(config));localStorage.setItem(META_KEY,JSON.stringify(meta));
+    localStorage.setItem(AUTO_KEY,JSON.stringify(config));
   }
   const META_KEY="miJornada.meta.v1";
-  let meta;try{meta=JSON.parse(localStorage.getItem(META_KEY)||"{}")||{}}catch(e){meta={}}
-  meta.vacations=meta.vacations||{};meta.holidays=meta.holidays||{};meta.trash=meta.trash||{};
+  function normalizeMeta(raw){
+    const obj=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
+    const map=x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{};
+    return {...obj,vacations:map(obj.vacations),holidays:map(obj.holidays),trash:map(obj.trash)};
+  }
+  let meta;try{meta=normalizeMeta(JSON.parse(localStorage.getItem(META_KEY)||"{}"))}catch(e){meta=normalizeMeta(null)}
   function saveMeta(){localStorage.setItem(META_KEY,JSON.stringify(meta));scheduleCloudSave()}
   function purgeTrash(){let changed=false;for(const [s,item] of Object.entries(meta.trash)){if(Date.now()-Date.parse(item.deletedAt)>=30*86400000){delete meta.trash[s];changed=true}}if(changed)saveMeta()}
   let selected=today();
@@ -219,7 +223,7 @@
   }
   function refreshExtras(){purgeTrash();renderCalendar();loadEntry();renderSummary();renderTrash()}
   function renderTrash(){$("trashList").innerHTML=Object.entries(meta.trash).map(([s,v])=>'<div class="row"><span>'+fmt(s)+'</span><button type="button" data-restore="'+s+'">Restaurar</button></div>').join("")||"Papelera vacía";document.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=b.dataset.restore;data[s]=meta.trash[s].entry;delete meta.trash[s];save();saveMeta();refreshExtras()})}
-  function changeVacation(remove){const a=$("vacStart").value,b=$("vacEnd").value;if(!a||!b||a>b)return alert("Revisa las fechas.");const days=[];for(let d=parse(a),i=0;i<400&&iso(d)<=b;i++,d.setDate(d.getDate()+1)){const s=iso(d),dow=d.getDay();if(dow!==0&&dow!==6&&!meta.holidays[s])days.push(s)}if(!confirm((remove?"Quitar":"Guardar")+" "+days.length+" días de vacaciones?"))return;days.forEach(s=>{if(remove)delete meta.vacations[s];else{meta.vacations[s]=true;if(data[s]?.auto)delete data[s]}});save();saveMeta();refreshExtras()}
+  function changeVacation(remove){const a=$("vacStart").value,b=$("vacEnd").value;if(!a||!b||a>b)return alert("Revisa las fechas.");const days=[];for(let d=parse(a),i=0;i<400&&iso(d)<=b;i++,d.setDate(d.getDate()+1)){const s=iso(d),dow=d.getDay();if(dow!==0&&dow!==6)days.push(s)}if(!confirm((remove?"Quitar":"Guardar")+" "+days.length+" días de vacaciones?"))return;days.forEach(s=>{if(remove)delete meta.vacations[s];else{meta.vacations[s]=true;if(data[s]?.auto)delete data[s]}});save();saveMeta();refreshExtras()}
   $("addVacation").onclick=()=>changeVacation(false);$("removeVacation").onclick=()=>changeVacation(true);
   $("addHoliday").onclick=()=>{const name=$("holidayName").value.trim();if(!name)return alert("Indica el nombre del festivo.");if(!confirm("Guardar festivo "+fmt(selected)+"?"))return;meta.holidays[selected]=name;if(data[selected]?.auto)delete data[selected];save();saveMeta();refreshExtras()};
   $("removeHoliday").onclick=()=>{if(!meta.holidays[selected]||!confirm("Quitar festivo?"))return;delete meta.holidays[selected];saveMeta();refreshExtras()};
@@ -267,11 +271,11 @@
       const j=JSON.parse(await file.text());
       if(!j.data||typeof j.data!=="object"||Array.isArray(j.data))throw Error("Formato no válido");
       if(!confirm("Importar sustituirá los registros actuales de este móvil. ¿Continuar?"))return;
-      data=j.data;if(j.meta&&typeof j.meta==="object"){meta=j.meta;saveMeta()}
+      data=j.data;meta=normalizeMeta(j.meta);saveMeta()
       if(j.automatico&&typeof j.automatico.enabled==="boolean"&&j.automatico.since){
         config=j.automatico;saveConfig();
       }
-      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
+      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
       $("backupStatus").textContent="Copia importada correctamente.";
     }catch(e){$("backupStatus").textContent="No se pudo importar: el archivo no parece una copia válida.";}
     ev.target.value="";
@@ -317,7 +321,7 @@
   }
   function redrawFromCloud(){
     syncAutoEntries();
-    renderAuto();renderCalendar();loadEntry();renderSummary();
+    renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
   }
   function restoreCloud(payload){
     let incoming;
@@ -332,7 +336,8 @@
     }
     data=incoming.data;
     config=incoming.automatico;
-    if(incoming.meta&&typeof incoming.meta==="object")meta=incoming.meta;
+    meta=normalizeMeta(incoming.meta);
+    localStorage.setItem(META_KEY,JSON.stringify(meta));
     localStorage.setItem(KEY,JSON.stringify(data));
     localStorage.setItem(AUTO_KEY,JSON.stringify(config));
     localStorage.setItem(syncKey(cloud.uid),payload);
