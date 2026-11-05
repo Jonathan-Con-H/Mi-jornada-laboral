@@ -8,7 +8,13 @@
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span><span><i class="dot" style="background:#1D4ED8"></i>Vacaciones</span><span><i class="dot" style="background:#D4AF37"></i>Festivo</span></div></div>
-<div class="panel"><h2>Vacaciones y festivos</h2><div class="fields"><label class="field">Inicio vacaciones<input type="date" id="vacStart"></label><label class="field">Fin vacaciones<input type="date" id="vacEnd"></label><label class="field">Nombre festivo<input id="holidayName" placeholder="Nombre del festivo"></label></div><div class="actions"><button type="button" id="addVacation" class="primary">Guardar vacaciones</button><button type="button" id="removeVacation" class="secondary">Quitar vacaciones</button><button type="button" id="addHoliday" class="secondary">Marcar festivo</button><button type="button" id="removeHoliday" class="secondary">Quitar festivo</button></div><p class="muted">Vacaciones y festivos requieren confirmación. Selecciona un día del calendario para marcar un festivo.</p></div><div class="panel"><h2>Papelera (30 días)</h2><button type="button" id="deleteDay" class="danger">Eliminar jornada seleccionada</button><div id="trashList"></div></div><div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
+<div class="panel"><h2>Vacaciones y festivos</h2>
+<div class="fields"><label class="field">Año de vacaciones<input type="number" id="vacYear" min="2000" max="2100"></label><label class="field">Días de vacaciones por año<input type="number" id="vacAllowance" min="0" max="366" placeholder="Sin configurar"></label></div>
+<div class="actions"><button type="button" id="saveVacAllowance" class="secondary">Guardar días anuales</button></div><p class="notice" id="vacBalance" role="status"></p>
+<div class="fields"><label class="field">Inicio vacaciones<input type="date" id="vacStart"></label><label class="field">Fin vacaciones<input type="date" id="vacEnd"></label><label class="field">Nuevo inicio (para modificar)<input type="date" id="vacNewStart"></label><label class="field">Nuevo fin (para modificar)<input type="date" id="vacNewEnd"></label><label class="field full">Nombre festivo<input id="holidayName" placeholder="Nombre del festivo"></label></div>
+<div class="actions"><button type="button" id="addVacation" class="primary">Añadir vacaciones</button><button type="button" id="editVacation" class="secondary">Modificar fechas</button><button type="button" id="removeVacation" class="secondary">Quitar vacaciones</button><button type="button" id="addHoliday" class="secondary">Marcar festivo</button><button type="button" id="removeHoliday" class="secondary">Quitar festivo</button></div>
+<p class="muted">Para modificar, indica el periodo original y el nuevo. Se descuentan días de lunes a viernes, excepto los festivos que hayas marcado. Cada cambio pide confirmación.</p>
+<h3 style="font-size:1rem">Historial de cambios de vacaciones</h3><div id="vacHistory" class="muted"></div></div><div class="panel"><h2>Papelera (30 días)</h2><button type="button" id="deleteDay" class="danger">Eliminar jornada seleccionada</button><div id="trashList"></div></div><div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Restablecer automático</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="cloudView" class="hidden">
@@ -72,7 +78,7 @@
   function normalizeMeta(raw){
     const obj=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
     const map=x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{};
-    return {...obj,vacations:map(obj.vacations),holidays:map(obj.holidays),trash:map(obj.trash)};
+    return {...obj,vacations:map(obj.vacations),holidays:map(obj.holidays),trash:map(obj.trash),vacationAllowance:map(obj.vacationAllowance),vacationHistory:Array.isArray(obj.vacationHistory)?obj.vacationHistory:[]};
   }
   let meta;try{meta=normalizeMeta(JSON.parse(localStorage.getItem(META_KEY)||"{}"))}catch(e){meta=normalizeMeta(null)}
   function saveMeta(){localStorage.setItem(META_KEY,JSON.stringify(meta));scheduleCloudSave()}
@@ -221,15 +227,87 @@
       "Activo desde el "+fmt(config.since)+". Las jornadas de lunes a viernes se guardan según el turno cuando llega su hora, al abrir la app o volver a ella. Los días sin abrirla se completan al regresar.":
       "Desactivado. No se crearán nuevas jornadas automáticas hasta que lo actives; tus registros anteriores se conservan.";
   }
-  function refreshExtras(){purgeTrash();renderCalendar();loadEntry();renderSummary();renderTrash()}
+  function refreshExtras(){purgeTrash();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations()}
   function renderTrash(){$("trashList").innerHTML=Object.entries(meta.trash).map(([s,v])=>'<div class="row"><span>'+fmt(s)+'</span><button type="button" data-restore="'+s+'">Restaurar</button></div>').join("")||"Papelera vacía";document.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=b.dataset.restore;data[s]=meta.trash[s].entry;delete meta.trash[s];save();saveMeta();refreshExtras()})}
-  function changeVacation(remove){const a=$("vacStart").value,b=$("vacEnd").value;if(!a||!b||a>b)return alert("Revisa las fechas.");const days=[];for(let d=parse(a),i=0;i<400&&iso(d)<=b;i++,d.setDate(d.getDate()+1)){const s=iso(d),dow=d.getDay();if(dow!==0&&dow!==6)days.push(s)}if(!confirm((remove?"Quitar":"Guardar")+" "+days.length+" días de vacaciones?"))return;days.forEach(s=>{if(remove)delete meta.vacations[s];else{meta.vacations[s]=true;if(data[s]?.auto)delete data[s]}});save();saveMeta();refreshExtras()}
-  $("addVacation").onclick=()=>changeVacation(false);$("removeVacation").onclick=()=>changeVacation(true);
-  $("addHoliday").onclick=()=>{const name=$("holidayName").value.trim();if(!name)return alert("Indica el nombre del festivo.");if(!confirm("Guardar festivo "+fmt(selected)+"?"))return;meta.holidays[selected]=name;if(data[selected]?.auto)delete data[selected];save();saveMeta();refreshExtras()};
-  $("removeHoliday").onclick=()=>{if(!meta.holidays[selected]||!confirm("Quitar festivo?"))return;delete meta.holidays[selected];saveMeta();refreshExtras()};
+
+  function vacationDates(start,end){
+    if(!/^\d{4}-\d\d-\d\d$/.test(start||"")||!/^\d{4}-\d\d-\d\d$/.test(end||"")||start>end)return null;
+    const a=parse(start),b=parse(end);
+    const diff=Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);
+    if(iso(a)!==start||iso(b)!==end||diff>399)return null;
+    const days=[];
+    for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1))if(d.getDay()!==0&&d.getDay()!==6)days.push(iso(d));
+    return days;
+  }
+  function vacationUsed(year,dates=meta.vacations){
+    return Object.keys(dates).filter(s=>dates[s]&&s.startsWith(String(year)+"-")&&!meta.holidays[s]&&parse(s).getDay()%6!==0).length;
+  }
+  function vacationQuota(year){const v=meta.vacationAllowance[String(year)];return v==null||v===""?null:Number(v);}
+  function renderVacations(){
+    const year=Number($("vacYear").value)||viewDate.getFullYear(),q=vacationQuota(year),used=vacationUsed(year);
+    $("vacAllowance").value=q===null?"":String(q);
+    $("vacBalance").textContent=q===null
+      ?year+": "+used+" días de vacaciones anotados. Configura los días anuales para conocer el saldo."
+      :year+": "+used+" días gastados de "+q+". Días disponibles: "+(q-used)+". Los festivos marcados no cuentan.";
+    const h=meta.vacationHistory.slice(-20).reverse();
+    $("vacHistory").innerHTML=h.length?h.map(row=>{
+      if(!row||typeof row!=="object")return "";
+      const before=Array.isArray(row.before)&&row.before.length===2?fmt(row.before[0])+" a "+fmt(row.before[1]):"Sin fechas";
+      const after=Array.isArray(row.after)&&row.after.length===2?fmt(row.after[0])+" a "+fmt(row.after[1]):"Sin fechas";
+      return '<div style="border-top:1px solid #e5edf1;padding:8px 0"><strong>'+escapeHtml(row.action||"Cambio")+'</strong> · '+escapeHtml(before)+' → '+escapeHtml(after)+' ('+Math.max(0,Number(row.changed)||0)+' días cambiados)</div>';
+    }).join(""):"Sin cambios anteriores.";
+  }
+  function vacationWarnings(next){
+    const years=[...new Set(Object.keys(next).filter(s=>next[s]).map(s=>s.slice(0,4)))];
+    return years.map(y=>{
+      const q=vacationQuota(y),used=vacationUsed(y,next);
+      return q!==null&&used>q?y+": "+used+" días de "+q+" (exceso: "+(used-q)+")":null;
+    }).filter(Boolean);
+  }
+  function editVacation(mode){
+    const start=$("vacStart").value,end=$("vacEnd").value,oldDays=vacationDates(start,end);
+    if(!oldDays||!oldDays.length)return alert("Revisa las fechas originales (máximo 400 días de intervalo).");
+    let newStart="",newEnd="",newDays=[];
+    if(mode==="modificar"){
+      newStart=$("vacNewStart").value;newEnd=$("vacNewEnd").value;newDays=vacationDates(newStart,newEnd);
+      if(!newDays||!newDays.length)return alert("Revisa las fechas nuevas.");
+    }
+    const next={...meta.vacations};
+    if(mode!=="añadir"){
+      if(!oldDays.some(day=>next[day]))return alert("El periodo original no contiene vacaciones guardadas.");
+      oldDays.forEach(day=>delete next[day]);
+    }
+    if(mode!=="quitar")(mode==="añadir"?oldDays:newDays).forEach(day=>next[day]=true);
+    const changed=[...new Set([...Object.keys(meta.vacations),...Object.keys(next)])].filter(s=>!!meta.vacations[s]!==!!next[s]);
+    if(!changed.length)return alert("Esas vacaciones ya están guardadas: no hay cambios.");
+    const warnings=vacationWarnings(next);
+    const msg=warnings.length?"ATENCIÓN: superarías tus días disponibles:\n"+warnings.join("\n")+"\n\n¿Quieres guardar igualmente?":
+      mode==="modificar"?"¿Confirmas modificar las fechas?":mode==="añadir"?"¿Confirmas añadir vacaciones?":"¿Confirmas quitar vacaciones?";
+    if(!confirm(msg))return;
+    meta.vacations=next;
+    const before=mode==="añadir"?null:[start,end],after=mode==="quitar"?null:mode==="añadir"?[start,end]:[newStart,newEnd];
+    meta.vacationHistory.push({at:new Date().toISOString(),action:mode,before,after,changed:changed.length});
+    changed.forEach(day=>{if(next[day]&&data[day]?.auto)delete data[day]});
+    save();saveMeta();refreshExtras();
+  }
+  $("addVacation").onclick=()=>editVacation("añadir");
+  $("editVacation").onclick=()=>editVacation("modificar");
+  $("removeVacation").onclick=()=>editVacation("quitar");
+  $("vacYear").value=String(new Date().getFullYear());
+  $("vacYear").onchange=renderVacations;
+  $("saveVacAllowance").onclick=()=>{
+    const y=Number($("vacYear").value),raw=$("vacAllowance").value,n=Number(raw);
+    if(!Number.isInteger(y)||y<2000||y>2100||raw===""||!Number.isInteger(n)||n<0||n>366)return alert("Indica un año y un número válido de días anuales (0 a 366).");
+    const used=vacationUsed(y);
+    if(!confirm(used>n?"Tienes "+used+" días anotados y solo "+n+" disponibles. El saldo será negativo. ¿Confirmas?":"¿Guardar "+n+" días de vacaciones anuales para "+y+"?"))return;
+    meta.vacationAllowance[String(y)]=n;saveMeta();renderVacations();
+  };
+  $("addHoliday").onclick=()=>{const name=$("holidayName").value.trim();if(!name)return alert("Indica el nombre del festivo.");if(!confirm("¿Marcar festivo el "+fmt(selected)+"? Si es día de vacaciones, no consumirá saldo."))return;meta.holidays[selected]=name;if(data[selected]?.auto)delete data[selected];save();saveMeta();refreshExtras()};
+  $("removeHoliday").onclick=()=>{if(!meta.holidays[selected]||!confirm("¿Quitar festivo? Si coincide con vacaciones, ese día consumirá saldo."))return;delete meta.holidays[selected];saveMeta();refreshExtras()};
   $("deleteDay").onclick=()=>{if(!data[selected])return alert("No hay jornada guardada.");if(!confirm("Eliminar jornada del "+fmt(selected)+"? Podrás recuperarla 30 días."))return;meta.trash[selected]={entry:data[selected],deletedAt:new Date().toISOString()};delete data[selected];save();saveMeta();refreshExtras()};
   $("entryForm").addEventListener("submit",ev=>{
     ev.preventDefault();
+    if(formEntry().kind==="work"&&(meta.vacations[selected]||meta.holidays[selected])&&!confirm("Este día tiene vacaciones o festivo. ¿Guardar la jornada trabajada sin quitar esas marcas?"))return;
     data[selected]={...formEntry(),auto:false,stopped:!!(data[selected]&&data[selected].stopped)};
     save();renderCalendar();loadEntry();renderSummary();
     $("dayHint").textContent="Día guardado en este dispositivo; se enviará a la nube si has iniciado sesión.";
@@ -241,7 +319,7 @@
     save();renderCalendar();loadEntry();renderSummary();
   });
   $("resetDay").addEventListener("click",()=>{
-    if(data[selected]){meta.trash[selected]={entry:data[selected],deletedAt:new Date().toISOString()};delete data[selected];saveMeta()}save();syncAutoEntries();
+    if(data[selected]){if(!confirm("¿Restablecer esta jornada? La anterior irá a la papelera durante 30 días."))return;meta.trash[selected]={entry:data[selected],deletedAt:new Date().toISOString()};delete data[selected];saveMeta()}save();syncAutoEntries();
     renderCalendar();loadEntry();renderSummary();
   });
   $("toggleAuto").addEventListener("click",()=>{
@@ -275,7 +353,7 @@
       if(j.automatico&&typeof j.automatico.enabled==="boolean"&&j.automatico.since){
         config=j.automatico;saveConfig();
       }
-      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
+      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
       $("backupStatus").textContent="Copia importada correctamente.";
     }catch(e){$("backupStatus").textContent="No se pudo importar: el archivo no parece una copia válida.";}
     ev.target.value="";
@@ -321,7 +399,7 @@
   }
   function redrawFromCloud(){
     syncAutoEntries();
-    renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
+    renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
   }
   function restoreCloud(payload){
     let incoming;
@@ -479,6 +557,6 @@
   setInterval(tick,60000);
   if("serviceWorker" in navigator&&location.protocol.startsWith("http"))
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
-  purgeTrash();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
+  purgeTrash();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
 
 </script></body></html>
