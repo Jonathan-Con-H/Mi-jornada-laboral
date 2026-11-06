@@ -3,7 +3,7 @@
 :root{color-scheme:dark;--bg:#04111f;--card:#091d30;--line:#284363;--cyan:#38bdf8;--teal:#14b8a6;--purple:#b249f4;--gold:#fbbf24;--red:#e32636;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f9fbff;background:var(--bg)}
 *{box-sizing:border-box}
 body{min-height:100vh;margin:0;color:#f5f8ff;background:radial-gradient(ellipse at 70% 0,#0c233a 0,#051422 48%,#03101b 100%)}
-body>header{display:none}
+body>header:not(.mj-top){display:none}
 .mj-top{min-height:82px;padding:13px clamp(13px,3vw,43px);display:flex;align-items:center;justify-content:space-between;gap:13px;background:linear-gradient(110deg,#061522,#061a2d);border-bottom:1px solid #203752}
 .mj-brand{display:flex;align-items:center;gap:15px;font-size:clamp(1.45rem,3vw,2.45rem);font-weight:850;white-space:nowrap;letter-spacing:-.04em}
 .mj-brand .mj-icon{width:45px;height:45px;color:#35c9fc}
