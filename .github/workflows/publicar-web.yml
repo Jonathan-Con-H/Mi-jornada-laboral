@@ -1,12 +1,6 @@
-name: Publicar Mi Jornada en la web
+name: Mi Jornada web (flujo antiguo, manual)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - index.html
-      - manifest.webmanifest
-      - .github/workflows/publicar-web.yml
   workflow_dispatch:
 
 permissions:
@@ -30,12 +24,12 @@ jobs:
       - name: Preparar solo los archivos web
         run: |
           mkdir -p _site
-          cp index.html _site/index.html
+          cp index.html dashboard.css dashboard.js sw.js _site/
           if [ -f manifest.webmanifest ]; then cp manifest.webmanifest _site/; fi
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
       - name: Subir la web
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./_site
       - name: Publicar Mi Jornada
