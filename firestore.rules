@@ -6,5 +6,26 @@ service cloud.firestore {
       allow read, write: if request.auth != null
         && request.auth.uid == userId;
     }
+
+    // Conversaciones del asistente, privadas para cada cuenta.
+    match /users/{userId}/assistantChats/{chatId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['title', 'messages', 'createdAt', 'updatedAt'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.messages is list
+        && request.resource.data.messages.size() <= 40;
+    }
+
+    // Memoria personal editable y borrable; no es el registro laboral.
+    match /users/{userId}/assistant/{docId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId
+        && docId == 'memory';
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && docId == 'memory'
+        && request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+        && request.resource.data.items is map;
+    }
   }
 }
