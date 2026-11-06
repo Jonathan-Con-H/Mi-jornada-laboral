@@ -75,12 +75,14 @@
   const monthPanel = document.createElement('div');
   monthPanel.className = 'mj-insight-card';
   monthPanel.innerHTML =
-    '<div class="mj-card-title">' + glyph('chart') + '<span>Resumen de <span id="mjPanelMonth">este mes</span></span></div>' +
-    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('calendar') + 'Días registrados</span><strong id="mjDays">0</strong></div>' +
-    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('clock') + 'Horas de jornada</span><strong id="mjHours">0:00</strong></div>' +
-    '<div class="mj-metric extra"><span class="mj-metric-label">' + glyph('plus') + 'Horas extras</span><strong id="mjExtras">0:00</strong></div>' +
-    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('cup') + 'Descanso (se debe)</span><strong id="mjOwed">0:00</strong></div>' +
-    '<div class="mj-metric total"><span class="mj-metric-label">' + glyph('sum') + 'Jornada + extras</span><strong id="mjTotal">0:00</strong></div>' +
+    '<div class="mj-card-title">' + glyph('chart') + '<span>Resumen del mes</span></div>' +
+    '<div class="mj-month-caption" id="mjPanelMonth">Este mes</div>' +
+    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('calendar') + 'Días trabajados</span><strong id="mjDays">0</strong></div>' +
+    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('clock') + 'Horas trabajadas</span><strong id="mjHours">0:00</strong></div>' +
+    '<div class="mj-metric extra"><span class="mj-metric-label">' + glyph('plus') + 'Horas extra</span><strong id="mjExtras">0:00</strong></div>' +
+    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('cup') + 'Descanso (deben)</span><strong id="mjOwed">0:00</strong></div>' +
+    '<div class="mj-metric owed-balance"><span class="mj-metric-label">' + glyph('clock') + '<span>Horas que debo<small>Acumuladas desde el primer registro</small></span></span><strong id="mjOwedAll">0:00</strong></div>' +
+    '<div class="mj-metric total"><span class="mj-metric-label">' + glyph('sum') + 'Horas totales</span><strong id="mjTotal">0:00</strong></div>' +
     '<div class="mj-muted-note">Se cuentan únicamente los registros guardados de este mes; los automáticos usan el horario previsto. Las extras se anotan aparte.</div>';
   const insights = document.createElement('aside');
   insights.className = 'mj-insights';
@@ -137,7 +139,14 @@
       !hasRecord ? 'Pendiente de registrar' :
       e.auto && !e.stopped ? 'Apuntada automáticamente' : 'Jornada registrada';
     $mj('mjPanelMonth').textContent = monthLabel(viewDate);
-    let days = 0, worked = 0, extra = 0, owed = 0;
+    let days = 0, worked = 0, extra = 0, owed = 0, owedAll = 0;
+    // Deuda acumulada de todos los días trabajados y registrados hasta hoy.
+    // No se confunde con las horas de jornada, y no anticipa deuda futura.
+    Object.keys(data).forEach(function (key) {
+      if (key > current) return;
+      const item = entry(key);
+      if (item.kind === 'work') owedAll += Math.round((Number(item.owed) || 0) * 60);
+    });
     Object.keys(data).forEach(function (key) {
       const d = parse(key);
       if (Number.isNaN(d.getTime()) || d.getFullYear() !== viewDate.getFullYear() ||
@@ -153,6 +162,7 @@
     $mj('mjHours').textContent = hhmm(worked);
     $mj('mjExtras').textContent = hhmm(extra);
     $mj('mjOwed').textContent = hhmm(owed);
+    $mj('mjOwedAll').textContent = hhmm(owedAll);
     $mj('mjTotal').textContent = hhmm(worked + extra);
   }
   const oldRender = renderCalendar;
