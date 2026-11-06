@@ -38,9 +38,9 @@ function answer(text){bubbleMsg("assistant",text);speak(text);}
 function iso(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
 function dateByWords(q){
  const d=new Date();d.setHours(12,0,0,0);
- if(/mañana/.test(q))d.setDate(d.getDate()+1);
- else if(/pasado mañana/.test(q))d.setDate(d.getDate()+2);
- else if(/sábado/.test(q))d.setDate(d.getDate()+(6-d.getDay()+7)%7);
+ if(/pasado manana/.test(q))d.setDate(d.getDate()+2);
+ else if(/manana/.test(q))d.setDate(d.getDate()+1);
+ else if(/sabado/.test(q))d.setDate(d.getDate()+(6-d.getDay()+7)%7);
  else if(/domingo/.test(q))d.setDate(d.getDate()+(7-d.getDay())%7);
  return d;
 }
@@ -74,7 +74,7 @@ function onCommand(q){
   el("mj-ai-confirm").classList.add("visible");return;
  }
  if(/turno|trabaj.*(manana|hoy|sabado|domingo)/.test(s)){
-  answer("El "+human(day)+" tienes "+(e.kind==="rest"?"descanso previsto":("turno de "+(e.shift==="morning"?"mañana de 06:00 a 14:00":"tarde de 14:00 a 22:00"))+".");return;
+  const turno=e.kind==="rest"?"descanso previsto":("turno de "+(e.shift==="morning"?"mañana de 06:00 a 14:00":"tarde de 14:00 a 22:00"));answer("El "+human(day)+" tienes "+turno+".");return;
  }
  answer("Todavía solo puedo consultar tus turnos, las horas pendientes del mes y proponer horas extra o trabajo en sábado. Para otras peticiones sigo necesitando integrar un motor de IA.");
 }
