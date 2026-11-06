@@ -42,10 +42,10 @@
     navButton('stats','pie','Estadísticas') +
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones',true) +
-    navButton('ai','sparkles','IA Asistente',true) +
+    navButton('ai','sparkles','IA Asistente (beta)') +
     navButton('settings','settings','Ajustes') +
     navButton('backup','save','Copias de seguridad') +
-    navButton('cloud','cloud','Copia en la nube',true) +
+    navButton('cloud','cloud','Copia en la nube') +
     '</nav><div class="mj-sidebar-foot">' + glyph('cloud') +
     '<span>Datos guardados en este dispositivo</span></div>';
   document.body.insertBefore(sidebar, main);
@@ -57,6 +57,7 @@
     ['register','clock','Registro'],
     ['summary','chart','Resumen'],
     ['notes','notes','Notas'],
+    ['ai','sparkles','IA'],
     ['settings','settings','Ajustes']
   ];
   bottom.innerHTML = shortcuts.map(function (item) {
@@ -177,6 +178,10 @@
     updateInsights();
   };
   function choose(page) {
+    if (page === 'cloud' || page === 'ai') {
+      window.dispatchEvent(new CustomEvent('mi-jornada:open-tool',{detail:{page:page}}));
+      return;
+    }
     const tabPage = page === 'summary' || page === 'stats' ? 'summary' :
       page === 'backup' ? 'backup' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
