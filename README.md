@@ -24,3 +24,14 @@ La aplicación guarda los datos localmente en el dispositivo. En el apartado «C
 - El botón **Desactivar** evita nuevos registros automáticos, manteniendo los ya guardados.
 - Las 8 horas corresponden a la franja de la jornada; los 30 minutos de descanso se muestran aparte y generan 30 minutos en «tiempo que se debe» cada día laborable.
 - Los datos ya guardados con versiones anteriores se conservan. Antes de instalar una actualización, exportar copia JSON es recomendable.
+
+## Web: nube y asistente (versión inicial)
+
+- La página pública usa Firebase Authentication (correo y contraseña) y Firestore para `users/{uid}/backups/primary`.
+- Antes de guardar datos reales, habilita Firestore en el proyecto Firebase y **publica las reglas del archivo `firestore.rules` en la consola Firebase > Firestore > Reglas**. El archivo de GitHub por sí solo NO las activa.
+- Cada usuario debe ver y modificar solamente sus datos (`request.auth.uid == userId`).
+- La web no sustituye ninguna copia sin comparar los datos locales y los remotos. Si difieren sin versión sincronizada conocida, se solicita elegir. Conviene exportar un JSON antes de reemplazar cualquiera de las dos.
+- La aplicación Android ya dispone de conexión nativa a Firebase; la web utiliza el SDK JavaScript. El acceso compartido depende de usar la misma cuenta Firebase y de las reglas activas.
+- Si aparece un error de clave de API restringida, crea/registrar una aplicación web en Firebase y actualiza `firebase-web-config.js` con la configuración web oficial. Esa configuración es pública: **jamás insertar claves secretas o contraseñas de administrador en JavaScript o GitHub Pages**.
+- El asistente web inicial permite consultar turnos, horas debidas y proponer cambios sencillos. **Siempre solicita confirmación para guardar**. Tiene dictado y voz cuando el navegador los admite y chat local; **todavía no integra un modelo de IA** ni sincroniza el historial del chat entre dispositivos.
+- Para una IA conversacional completa habrá que elegir un proveedor seguro y configurar un servicio protegido para llamadas al modelo sin exponer credenciales en el cliente.
