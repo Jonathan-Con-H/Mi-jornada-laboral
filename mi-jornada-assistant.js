@@ -11,8 +11,8 @@ document.head.appendChild(css);
 const bubble=document.createElement("button");bubble.id="mj-ai-bubble";bubble.title="Abrir asistente de Mi Jornada";bubble.textContent="✦";document.body.appendChild(bubble);
 const panel=document.createElement("section");panel.id="mj-ai-panel";panel.setAttribute("aria-label","Asistente de Mi Jornada");
 panel.innerHTML=[
-"<div class='head'><strong>✦ Asistente · funciones iniciales</strong><button id='mj-ai-full' title='Ampliar'>⛶</button><button id='mj-ai-close'>✕</button></div>",
-"<p id='mj-ai-help'>Consulta turnos y horas, o pide anotar horas extra. Los cambios siempre requieren confirmación. No es todavía una IA conversacional.</p>",
+"<div class='head'><strong>✦ Asistente · Mi Jornada</strong><button id='mj-ai-full' title='Ampliar'>⛶</button><button id='mj-ai-close'>✕</button></div>",
+"<p id='mj-ai-help'>Consulta tus turnos o registra horas extra con confirmación. Para otras preguntas, Gemini usará un resumen de turnos y horas cuando esté habilitado App Check y tú autorices el envío a Google. No se comparten tus notas.</p>",
 "<div id='mj-ai-chat' aria-live='polite'></div>",
 "<div id='mj-ai-confirm'><button id='mj-ai-yes'>Confirmar cambio</button><button id='mj-ai-no'>Cancelar</button></div>",
 "<form id='mj-ai-form'><input id='mj-ai-input' aria-label='Escribe a tu asistente' placeholder='Ej.: ¿Qué turno tengo mañana?' autocomplete='off'>",
@@ -45,6 +45,23 @@ function dateByWords(q){
  return d;
 }
 function human(d){return d.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});}
+let geminiBusy = false;
+function askWithGemini(q) {
+  if (!window.miJornadaGemini) {
+    answer("El motor Gemini todavía no se ha cargado. Puedes seguir consultando turnos y horas.");
+    return;
+  }
+  geminiBusy = true;
+  const loading = document.createElement("div");
+  loading.className = "msg assistant";
+  loading.textContent = "Consultando Gemini…";
+  el("mj-ai-chat").appendChild(loading);
+  el("mj-ai-chat").scrollTop = el("mj-ai-chat").scrollHeight;
+  window.miJornadaGemini.ask(q, history.slice(-8))
+    .then(text => answer(text))
+    .catch(error => answer("No se pudo consultar Gemini: " + (error && error.message ? error.message : "Error de conexión.")))
+    .finally(() => { loading.remove(); geminiBusy = false; });
+}
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
  proposal=null;el("mj-ai-confirm").classList.remove("visible");
@@ -77,14 +94,14 @@ function onCommand(q){
  if(/turno|trabaj.*(manana|hoy|sabado|domingo)/.test(s)){
   const turno=e.kind==="rest"?"descanso previsto":("turno de "+(e.shift==="morning"?"mañana de 06:00 a 14:00":"tarde de 14:00 a 22:00"));answer("El "+human(day)+" tienes "+turno+".");return;
  }
- answer("Todavía solo puedo consultar tus turnos, las horas pendientes del mes y proponer horas extra o trabajo en sábado. Para otras peticiones sigo necesitando integrar un motor de IA.");
+ askWithGemini(q);
 }
 function open(){panel.classList.add("open");el("mj-ai-input").focus();}
 function close(){panel.classList.remove("open");if(window.speechSynthesis)window.speechSynthesis.cancel();}
 window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page==="ai")open();});
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
-el("mj-ai-form").onsubmit=event=>{event.preventDefault();const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
+el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
 el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");};
 el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
