@@ -62,6 +62,7 @@ function onCommand(q){
  const match=s.match(/(\d+(?:[.,]\d+)?)\s*(hora|horas|h)\s*(extra|extras)/);
  if(match&&/(anad|apunt|pon|registr|sum)/.test(s)){
   const extra=Math.round(Number(match[1].replace(",","."))*60);
+  if(e.kind!=="work"){answer("Ese día figura como descanso. Primero debes registrarlo como día trabajado.");return;}
   if(!(extra>0&&extra<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
   proposal={date:key,record:{...e,extraMins:(Number(e.extraMins)||0)+extra},what:"Añadir "+(extra/60)+" h extra el "+human(day)};
   answer("Voy a "+proposal.what.toLowerCase()+". ¿Confirmas? No lo guardaré hasta que pulses «Confirmar cambio».");
