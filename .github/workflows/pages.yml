@@ -1,13 +1,8 @@
 name: Publicar Mi Jornada en la web
 
+# La publicación automática la realiza GitHub Pages desde la rama main.
+# Este flujo se mantiene solo para una publicación manual excepcional.
 on:
-  push:
-    branches: [main]
-    paths:
-      - index.html
-      - manifest.webmanifest
-      - sw.js
-      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:
