@@ -44,8 +44,8 @@
   let selected=today();
   let viewDate=new Date();viewDate.setDate(1);
   let sumDate=new Date(viewDate);
-  function save(){localStorage.setItem(KEY,JSON.stringify(data));}
-  function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));}
+  function save(){localStorage.setItem(KEY,JSON.stringify(data));window.dispatchEvent(new Event('mi-jornada:data-changed'));}
+  function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));window.dispatchEvent(new Event('mi-jornada:data-changed'));}
   function weekShift(s) {
     const d=parse(s),a=parse(anchor);
     const md=new Date(d.getFullYear(),d.getMonth(),d.getDate()-(d.getDay()+6)%7);
@@ -252,8 +252,26 @@
   if("serviceWorker" in navigator&&location.protocol.startsWith("http"))
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
   syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
-
-</script><script src="./dashboard.js?v=4"></script><script id="mj-view-toggle-script">
+  // API limitada para nube y asistente: nunca permite modificar una jornada sin confirmación desde su interfaz.
+  window.miJornadaBridge={
+    read:function(){return {app:"Mi Jornada",version:3,data:JSON.parse(JSON.stringify(data)),automatico:JSON.parse(JSON.stringify(config))};},
+    get:function(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s))throw Error("Fecha incorrecta");return JSON.parse(JSON.stringify(entry(s)));},
+    update:function(s,record){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!record||typeof record!=="object")throw Error("Registro no válido");
+      data[s]={...record,auto:false};save();renderCalendar();loadEntry();renderSummary();
+    },
+    restore:function(payload){
+      if(!payload||payload.app!=="Mi Jornada"||!payload.data||typeof payload.data!=="object"||
+         Array.isArray(payload.data)||!payload.automatico||typeof payload.automatico.enabled!=="boolean"||
+         typeof payload.automatico.since!=="string")throw Error("Copia de nube inválida");
+      const safety="miJornada.copia.antesDeNube";
+      if(!localStorage.getItem(safety))localStorage.setItem(safety,JSON.stringify(this.read()));
+      data=JSON.parse(JSON.stringify(payload.data));config=JSON.parse(JSON.stringify(payload.automatico));
+      saveConfig();save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
+    },
+    redraw:function(){renderAuto();renderCalendar();loadEntry();renderSummary();}
+  };
+</script><script src="./dashboard.js?v=4"></script><script type="module" src="./mi-jornada-cloud.js?v=1"></script><script defer src="./mi-jornada-assistant.js?v=1"></script><script id="mj-view-toggle-script">
 (function(){
   var viewport=document.querySelector('meta[name="viewport"]');
   var aside=document.querySelector('.mj-sidebar');
