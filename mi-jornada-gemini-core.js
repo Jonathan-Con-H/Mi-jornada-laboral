@@ -11,9 +11,10 @@ import {initializeAppCheck,ReCaptchaEnterpriseProvider} from "https://www.gstati
 import config from "./firebase-web-config.js";
 import appCheckConfig from "./firebase-appcheck-config.js";
 const app=getApps().length?getApp():initializeApp(config);
-const auth=getAuth(app),db=getFirestore(app);
 const siteKey=String(appCheckConfig.siteKey||"").trim();
+// Inicializar App Check ANTES de acceder a Auth, Firestore o Gemini.
 if(siteKey)initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(siteKey),isTokenAutoRefreshEnabled:true});
+const auth=getAuth(app),db=getFirestore(app);
 const model=siteKey?getGenerativeModel(getAI(app,{backend:new GoogleAIBackend()}),{
   model:"gemini-3.5-flash-lite",
   generationConfig:{responseMimeType:"application/json",maxOutputTokens:1800}
