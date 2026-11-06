@@ -129,3 +129,13 @@ main.wrap{padding:14px 8px 98px}
 .full{grid-column:auto}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* Contador independiente de horas pendientes; el descanso mensual queda visible. */
+.mj-month-caption{font-size:.8rem;color:#9bbdd4;text-transform:capitalize;margin:-10px 0 10px 32px}
+.mj-metric.owed-balance{margin-top:7px;padding:12px 10px;background:#132d40;border:1px solid #3b6581;border-radius:12px}
+.mj-metric.owed-balance .mj-icon,.mj-metric.owed-balance strong{color:#35c7ff}
+.mj-metric.owed-balance .mj-metric-label{align-items:flex-start}
+.mj-metric.owed-balance .mj-metric-label span{font-weight:720}
+.mj-metric.owed-balance .mj-metric-label small{display:block;font-size:.67rem;line-height:1.45;color:#a5bfd0;font-weight:400;margin-top:2px}
+.mj-metric.owed-balance strong{font-size:1.2rem}
+@media(max-width:570px){.mj-month-caption{margin-left:30px}.mj-metric.owed-balance{padding:12px 8px}}
