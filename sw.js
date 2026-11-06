@@ -1,5 +1,5 @@
-const CACHE_NAME = "mi-jornada-web-v5";
-const OFFLINE_FILES = ["./", "./index.html", "./manifest.webmanifest", "./dashboard.css?v=4", "./dashboard.js?v=4"];
+const CACHE_NAME = "mi-jornada-web-v6";
+const OFFLINE_FILES = ["./", "./index.html", "./manifest.webmanifest", "./dashboard.css?v=4", "./dashboard.js?v=4", "./firebase-web-config.js", "./mi-jornada-cloud.js?v=1", "./mi-jornada-assistant.js?v=1"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
