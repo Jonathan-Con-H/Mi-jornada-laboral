@@ -42,7 +42,7 @@
     navButton('stats','pie','Estadísticas') +
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones',true) +
-    navButton('ai','sparkles','IA Asistente (beta)') +
+    navButton('ai','sparkles','IA Asistente') +
     navButton('settings','settings','Ajustes') +
     navButton('backup','save','Copias de seguridad') +
     navButton('cloud','cloud','Copia en la nube') +
