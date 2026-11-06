@@ -1,5 +1,5 @@
-const CACHE_NAME = "mi-jornada-web-v1";
-const OFFLINE_FILES = ["./", "./index.html", "./manifest.webmanifest"];
+const CACHE_NAME = "mi-jornada-web-v2";
+const OFFLINE_FILES = ["./", "./index.html", "./manifest.webmanifest", "./dashboard.css", "./dashboard.js"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
