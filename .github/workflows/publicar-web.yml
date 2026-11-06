@@ -1,0 +1,43 @@
+name: Publicar Mi Jornada en la web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - manifest.webmanifest
+      - .github/workflows/publicar-web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar Mi Jornada
+        uses: actions/checkout@v4
+      - name: Preparar solo los archivos web
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          if [ -f manifest.webmanifest ]; then cp manifest.webmanifest _site/; fi
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Subir la web
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      - name: Publicar Mi Jornada
+        id: deployment
+        uses: actions/deploy-pages@v4
