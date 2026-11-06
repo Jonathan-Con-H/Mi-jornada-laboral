@@ -35,7 +35,7 @@ jobs:
       - name: Preparar web
         run: |
           mkdir -p _site
-          cp index.html manifest.webmanifest sw.js _site/
+          cp index.html manifest.webmanifest sw.js dashboard.css dashboard.js _site/
           touch _site/.nojekyll
 
       - name: Subir web
