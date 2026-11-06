@@ -1,0 +1,12 @@
+{
+  "name": "Mi Jornada — Calendario laboral",
+  "short_name": "Mi Jornada",
+  "description": "Calendario de turnos y registro personal de jornada laboral.",
+  "lang": "es",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f6f9",
+  "theme_color": "#123a5a"
+}
