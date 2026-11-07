@@ -57,12 +57,9 @@ function askWithGemini(q) {
   loading.textContent = "Consultando Gemini…";
   el("mj-ai-chat").appendChild(loading);
   el("mj-ai-chat").scrollTop = el("mj-ai-chat").scrollHeight;
-  // Evita bloquear el chat para siempre cuando la red o el servicio no responden.
-  let timeoutId;
-  const timeout = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error("La conexión con Gemini ha tardado demasiado. Puedes volver a intentarlo sin recargar la página.")), 25000);
-  });
-  Promise.race([window.miJornadaGemini.ask(q, history.slice(-8)), timeout])
+  // El motor limita cada etapa y cada petición, sin contar el diálogo de permiso.
+  Promise.resolve().then(() => window.miJornadaGemini.ask(q, history.slice(-8),
+    status => { loading.textContent = status; }))
     .then(text => answer(text))
     .catch(error => {
       const message = error && error.message ? error.message : "Error de conexión.";
@@ -72,7 +69,7 @@ function askWithGemini(q) {
         answer("No se pudo consultar Gemini: " + message);
       }
     })
-    .finally(() => { clearTimeout(timeoutId); loading.remove(); geminiBusy = false; });
+    .finally(() => { loading.remove(); geminiBusy = false; });
 }
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
