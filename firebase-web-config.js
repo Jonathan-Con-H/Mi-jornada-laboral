@@ -1,5 +1,5 @@
 // Configuración pública del SDK web de Mi Jornada (no contiene contraseñas).
-// App Check: la clave pública de reCAPTCHA Enterprise se añadirá al registrarla en Firebase.
+// Clave pública de sitio reCAPTCHA Enterprise para Firebase App Check (no es una contraseña).
 export default {
   apiKey: "AIzaSyCYbvORIy2MViiQhO3q3RqK56T1Avbzcs0",
   authDomain: "mi-jornada-laboral-67c45.firebaseapp.com",
@@ -8,5 +8,5 @@ export default {
   messagingSenderId: "13629207020",
   appId: "1:13629207020:web:504088bb73b3bd7cd890c9",
   measurementId: "G-RE3XV02JWZ",
-  appCheckSiteKey: ""
+  appCheckSiteKey: "6LcNWBUuAAAAAB8VBS3i9C8A1REIas1HXLIqqQN_"
 };
