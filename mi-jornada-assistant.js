@@ -57,10 +57,22 @@ function askWithGemini(q) {
   loading.textContent = "Consultando Gemini…";
   el("mj-ai-chat").appendChild(loading);
   el("mj-ai-chat").scrollTop = el("mj-ai-chat").scrollHeight;
-  window.miJornadaGemini.ask(q, history.slice(-8))
+  // Evita bloquear el chat para siempre cuando la red o el servicio no responden.
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La conexión con Gemini ha tardado demasiado. Puedes volver a intentarlo sin recargar la página.")), 25000);
+  });
+  Promise.race([window.miJornadaGemini.ask(q, history.slice(-8)), timeout])
     .then(text => answer(text))
-    .catch(error => answer("No se pudo consultar Gemini: " + (error && error.message ? error.message : "Error de conexión.")))
-    .finally(() => { loading.remove(); geminiBusy = false; });
+    .catch(error => {
+      const message = error && error.message ? error.message : "Error de conexión.";
+      if (/Failed to fetch/i.test(message)) {
+        answer("No se pudo conectar con Firebase AI Logic. Revisa la configuración de App Check y la conexión a Internet. Tus jornadas siguen guardadas.");
+      } else {
+        answer("No se pudo consultar Gemini: " + message);
+      }
+    })
+    .finally(() => { clearTimeout(timeoutId); loading.remove(); geminiBusy = false; });
 }
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
