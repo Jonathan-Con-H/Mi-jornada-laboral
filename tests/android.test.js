@@ -79,8 +79,9 @@ test("crear nueva hoja conserva la empresa anterior y permite volver",()=>{
   assert.equal(sheets.items[0].data[h.oldDay].notes,h.original.notes);
   assert.equal(Object.keys(sheets.items[1].data).length,0);
   assert.equal(sheets.items[0].closedAt,"2027-01-10");
-  const oldButton=h.element("serviceList").children.find(x=>x.textContent.includes("Mi primera hoja"));
-  assert.ok(oldButton);
+  const oldRow=h.element("serviceList").children.find(row=>row.children.some(btn=>btn.textContent.includes("Mi primera hoja")));
+  assert.ok(oldRow);
+  const oldButton=oldRow.children.find(btn=>btn.attributes.role==="tab");
   oldButton.onclick();
   assert.equal(JSON.parse(h.storage.get("miJornada.v1"))[h.oldDay].notes,h.original.notes);
 });
@@ -117,7 +118,7 @@ test("Mis empresas muestra una pestaña por empresa y cambia sin borrar el histo
   h.element("serviceStart").value="2027-01-11";
   h.element("serviceShift").value="morning";
   h.element("serviceForm").onsubmit({preventDefault(){}});
-  const tabs=h.element("serviceList").children;
+  const tabs=h.element("serviceList").children.map(row=>row.children.find(btn=>btn.attributes.role==="tab"));
   assert.equal(tabs.length,2);
   assert.equal(tabs[0].attributes.role,"tab");
   assert.equal(tabs[0].attributes["aria-selected"],"false");
@@ -129,7 +130,7 @@ test("Mis empresas muestra una pestaña por empresa y cambia sin borrar el histo
   assert.equal(stored.items.length,2);
   assert.equal(stored.activeId,stored.items[0].id);
   assert.equal(stored.items[0].data[h.oldDay].notes,h.original.notes);
-  assert.equal(h.element("serviceList").children[0].attributes["aria-selected"],"true");
+  assert.equal(h.element("serviceList").children[0].children[0].attributes["aria-selected"],"true");
 });
 
 
@@ -140,7 +141,7 @@ test("renombrar una empresa actualiza su pestaña sin cambiar jornadas",()=>{
   const state=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
   assert.equal(state.items[0].name,"Mi empresa actual");
   assert.equal(state.items[0].data[h.oldDay].notes,h.original.notes);
-  assert.match(h.element("serviceList").children[0].textContent,/Mi empresa actual/);
+  assert.match(h.element("serviceList").children[0].children[0].textContent,/Mi empresa actual/);
 });
 
 
@@ -151,4 +152,51 @@ test("calendario ensancha solo las casillas sin cambiar colores de turnos",()=>{
   assert.match(css,/grid-template-columns:repeat\(7,minmax\(62px,1fr\)\)/);
   assert.match(css,/\.day\.morning\{border:3px solid #38BDF8\}/);
   assert.match(css,/\.day\.afternoon\{border:3px solid #14B8A6\}/);
+});
+
+test("cada hoja mantiene color aleatorio al cambiar de empresa",()=>{
+ const h=harness();
+ h.element("serviceShowForm").onclick();
+ h.element("serviceName").value="Segunda empresa";
+ h.element("serviceStart").value="2027-01-11";
+ h.element("serviceShift").value="morning";
+ h.element("serviceForm").onsubmit({preventDefault(){}});
+ const state=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+ const colors=state.items.map(item=>item.tabColor);
+ assert.equal(new Set(colors).size,2);
+ assert.ok(colors.every(c=>/^#[0-9A-Fa-f]{6}$/.test(c)));
+ const firstTab=h.element("serviceList").children[0].children[0];
+ firstTab.onclick();
+ const updated=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+ assert.deepEqual(updated.items.map(item=>item.tabColor),colors);
+});
+
+test("borrado manual conserva toda la hoja y permite restaurarla",()=>{
+ const h=harness();
+ h.element("serviceShowForm").onclick();
+ h.element("serviceName").value="Segunda empresa";
+ h.element("serviceStart").value="2027-01-11";
+ h.element("serviceShift").value="morning";
+ h.element("serviceForm").onsubmit({preventDefault(){}});
+ const initial=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+ const deleteButton=h.element("serviceList").children[0].children[1];
+ assert.equal(deleteButton.disabled,false);
+ deleteButton.onclick();
+ const deleted=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+ assert.equal(deleted.items.length,1);
+ assert.equal(deleted.deleted.length,1);
+ assert.equal(deleted.deleted[0].sheet.data[h.oldDay].notes,h.original.notes);
+ assert.equal(deleted.deleted[0].sheet.tabColor,initial.items[0].tabColor);
+ h.element("serviceTrashList").children[0].onclick();
+ const restored=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+ assert.equal(restored.items.length,2);
+ assert.equal(restored.deleted.length,0);
+ const original=restored.items.find(item=>item.id==="initial");
+ assert.equal(original.data[h.oldDay].notes,h.original.notes);
+ assert.equal(original.tabColor,initial.items[0].tabColor);
+});
+
+test("no permite eliminar la única hoja",()=>{
+ const h=harness();
+ assert.equal(h.element("serviceList").children[0].children[1].disabled,true);
 });
