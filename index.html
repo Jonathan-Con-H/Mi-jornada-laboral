@@ -19,6 +19,15 @@
 <option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" max="1440" step="1" value="0"></label>
 <label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="1440" step="1" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
+<section id="vacationView" class="hidden"><div class="panel"><h2 style="margin-top:0">Vacaciones</h2>
+<p class="muted">Registra los días de vacaciones desde el calendario: selecciona una fecha, elige «Vacaciones» y guarda. No se asignan ni descuentan días de forma automática hasta que lo registres.</p>
+<div class="fields"><label class="field">Año<input id="vacationYear" type="number" min="2000" max="2100"></label>
+<label class="field">Cupo anual de días (opcional)<input id="vacationAllowance" type="number" min="0" max="366" step="1" placeholder="Sin configurar"></label></div>
+<div class="actions"><button type="button" class="primary" id="saveVacationAllowance">Guardar cupo anual</button></div>
+<p id="vacationStats" class="muted"></p><div id="vacationDates"></div>
+<h3>Historial de cambios</h3><div id="vacationHistory"></div>
+<p class="muted">El recuento incluye cada fecha marcada como vacaciones; comprueba tus festivos y el criterio de tu empresa antes de usarlo como saldo oficial.</p>
+</div></section>
 <section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">La sincronización automática en la nube todavía no está conectada. Guarda una copia fuera del móvil periódicamente.</p><p class="muted" id="backupStatus"></p></div>
 <div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Papelera de jornadas</h2>
 <p class="muted">Los registros eliminados se conservan 30 días y después se borran automáticamente sin aviso. Puedes restaurarlos mientras estén aquí.</p>
@@ -31,6 +40,8 @@
   const AUTO_KEY = "miJornada.auto.v1";
   const TRASH_KEY = "miJornada.trash.v1";
   const SUPPRESSED_KEY = "miJornada.auto.suppressed.v1";
+  const VACATION_SETTINGS_KEY = "miJornada.vacation.allowances.v1";
+  const VACATION_HISTORY_KEY = "miJornada.vacation.history.v1";
   const TRASH_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const anchor = "2026-10-19";
   const $ = id => document.getElementById(id);
@@ -55,6 +66,26 @@
   }
   let trash=readObject(TRASH_KEY);
   let suppressed=readObject(SUPPRESSED_KEY);
+  let vacationSettings=readObject(VACATION_SETTINGS_KEY);
+  let vacationHistory=[];
+  try { const saved=JSON.parse(localStorage.getItem(VACATION_HISTORY_KEY)||"[]");
+    if(Array.isArray(saved))vacationHistory=saved; } catch(_) {}
+  function saveVacationMeta(){
+    localStorage.setItem(VACATION_SETTINGS_KEY,JSON.stringify(vacationSettings));
+    localStorage.setItem(VACATION_HISTORY_KEY,JSON.stringify(vacationHistory));
+    window.dispatchEvent(new Event("mi-jornada:data-changed"));
+  }
+  function vacationUsed(year) {
+    return Object.keys(data).filter(day=>day.slice(0,4)===String(year)&&data[day]&&data[day].kind==="vacation").length;
+  }
+  function logVacationChange(day,before,after) {
+    const from=before&&before.kind||"sin registrar",to=after&&after.kind||"eliminada";
+    if(from==="vacation"||to==="vacation"){
+      vacationHistory.push({date:day,from,to,changedAt:new Date().toISOString()});
+      vacationHistory=vacationHistory.slice(-1000);
+      saveVacationMeta();
+    }
+  }
   function saveTrash() {
     localStorage.setItem(TRASH_KEY,JSON.stringify(trash));
     localStorage.setItem(SUPPRESSED_KEY,JSON.stringify(suppressed));
@@ -112,7 +143,7 @@
     if(!Object.prototype.hasOwnProperty.call(DAY_NAMES,e.kind))throw Error("Tipo de día no válido.");
     if(String(e.notes||"").length>3000)throw Error("Las observaciones no pueden superar los 3000 caracteres.");
     if(e.kind!=="work")return;
-    if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(e.start)||!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(e.end))
+    if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(e.start)||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(e.end))
       throw Error("Introduce horas válidas de entrada y salida.");
     const minutes=duration(e)*60;
     if(minutes<=0)throw Error("La entrada y la salida no pueden coincidir.");
@@ -235,6 +266,28 @@
     $("sumNote").textContent="Se incluyen registros manuales y jornadas automáticas estimadas. Jornada = tiempo de entrada a salida; horas efectivas = jornada menos descanso y permisos por horas. Las ausencias no generan jornada ni deuda; el tiempo que se debe se contabiliza aparte."
     $("monthRows").innerHTML=rows.length?'<h3 style="font-size:1rem">Días registrados</h3>'+rows.join(""):'<p class="muted">Todavía no hay jornadas apuntadas para este mes.</p>';
   }
+  function renderVacations() {
+    const year=Number($("vacationYear").value)||new Date().getFullYear();
+    $("vacationAllowance").value=Object.prototype.hasOwnProperty.call(vacationSettings,String(year))
+      ?String(vacationSettings[String(year)]):"";
+    const used=vacationUsed(year),allowance=vacationSettings[String(year)];
+    $("vacationStats").textContent="Año "+year+" · "+used+" días registrados de vacaciones"+
+      (Number.isFinite(allowance)?" · cupo "+allowance+" · restantes "+(allowance-used):" · cupo sin configurar");
+    const days=Object.keys(data).filter(day=>day.startsWith(String(year))&&data[day]&&data[day].kind==="vacation").sort();
+    const list=$("vacationDates");list.replaceChildren();
+    const caption=document.createElement("p");caption.className="muted";
+    caption.textContent=days.length?"Días marcados: "+days.map(fmt).join(", "):"No hay vacaciones registradas este año.";
+    list.append(caption);
+    const history=$("vacationHistory");history.replaceChildren();
+    const entries=vacationHistory.slice(-20).reverse();
+    for(const h of entries){
+      if(!h||typeof h.date!=="string")continue;
+      const row=document.createElement("p");row.className="muted";
+      row.textContent=h.date+" · "+(DAY_NAMES[h.from]||h.from)+" → "+(DAY_NAMES[h.to]||h.to);
+      history.append(row);
+    }
+    if(!entries.length){const empty=document.createElement("p");empty.className="muted";empty.textContent="Todavía no hay cambios.";history.append(empty);}
+  }
   function renderTrash() {
     cleanupTrash();
     const root=$("trashList"); if(!root)return;
@@ -270,17 +323,35 @@
       "Activo desde el "+fmt(config.since)+". Las jornadas de lunes a viernes se guardan según el turno cuando llega su hora, al abrir la app o volver a ella. Los días sin abrirla se completan al regresar.":
       "Desactivado. No se crearán nuevas jornadas automáticas hasta que lo actives; tus registros anteriores se conservan.";
   }
+  $("vacationYear").value=String(new Date().getFullYear());
+  $("vacationYear").addEventListener("change",renderVacations);
+  $("saveVacationAllowance").addEventListener("click",()=>{
+    const year=Number($("vacationYear").value),field=$("vacationAllowance").value.trim();
+    if(!Number.isInteger(year)||year<2000||year>2100){alert("Introduce un año válido.");return;}
+    if(field!==""&&(!Number.isInteger(Number(field))||Number(field)<0||Number(field)>366)){
+      alert("Introduce un cupo anual entero entre 0 y 366 días.");return;
+    }
+    if(field==="")delete vacationSettings[String(year)];
+    else vacationSettings[String(year)]=Number(field);
+    saveVacationMeta();renderVacations();
+  });
   $("entryForm").addEventListener("submit",ev=>{
     ev.preventDefault();
     let edited;
     try { edited=formEntry();validateRecord(edited); }
     catch(err){alert(err.message);return;}
     const previous=data[selected];
+    if(edited.kind==="vacation"&&(!previous||previous.kind!=="vacation")){
+      const year=selected.slice(0,4),limit=vacationSettings[year];
+      if(Number.isFinite(limit)&&vacationUsed(year)>=limit &&
+        !confirm("Este día supera el cupo de "+limit+" días de vacaciones configurado para "+year+". ¿Quieres registrarlo de todos modos?"))return;
+    }
     if(previous&&previous.kind!==edited.kind &&
       !confirm("¿Cambiar "+DAY_NAMES[previous.kind]+" por "+DAY_NAMES[edited.kind]+" el "+fmt(selected)+"? Se sustituirá el registro de ese día."))return;
     data[selected]={...edited,auto:false,stopped:edited.kind==="work"&&!!(previous&&previous.stopped)};
+    logVacationChange(selected,previous,data[selected]);
     delete suppressed[selected];delete trash[selected];saveTrash();
-    save();renderCalendar();loadEntry();renderSummary();renderTrash();
+    save();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
     $("dayHint").textContent="Día guardado en este dispositivo.";
   });
   $("stopToday").addEventListener("click",()=>{
@@ -298,9 +369,10 @@
     }
     if(!confirm("¿Enviar la jornada del "+fmt(selected)+" a la papelera durante 30 días?"))return;
     trash[selected]={record:JSON.parse(JSON.stringify(data[selected])),deletedAt:new Date().toISOString()};
+    logVacationChange(selected,data[selected],null);
     suppressed[selected]=true;
     delete data[selected];saveTrash();save();
-    renderCalendar();loadEntry();renderSummary();renderTrash();
+    renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
   });
   $("toggleAuto").addEventListener("click",()=>{
     config.enabled=!config.enabled;
@@ -314,12 +386,13 @@
   $("sumNext").onclick=()=>{sumDate.setMonth(sumDate.getMonth()+1);renderSummary();};
   document.querySelectorAll("button.tab").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));
-    ["calendar","summary","backup"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
+    ["calendar","summary","backup","vacation"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
     if(b.dataset.tab==="summary")renderSummary();
     if(b.dataset.tab==="backup")renderTrash();
+    if(b.dataset.tab==="vacation")renderVacations();
   }));
   $("exportBtn").onclick=()=>{
-    const blob=new Blob([JSON.stringify({app:"Mi Jornada",version:4,exportedAt:new Date().toISOString(),data,automatico:config,trash,suppressed},null,2)],{type:"application/json"}),
+    const blob=new Blob([JSON.stringify({app:"Mi Jornada",version:5,exportedAt:new Date().toISOString(),data,automatico:config,trash,suppressed,vacationSettings,vacationHistory},null,2)],{type:"application/json"}),
       url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download=`mi-jornada-copia-${today()}.json`;a.click();URL.revokeObjectURL(url);
     $("backupStatus").textContent="Copia exportada. Comprueba que el archivo se haya guardado.";
@@ -332,12 +405,16 @@
       if(!confirm("Importar sustituirá los registros actuales de este móvil. ¿Continuar?"))return;
       if(j.trash!==undefined&&(!j.trash||typeof j.trash!=="object"||Array.isArray(j.trash)))throw Error("Papelera inválida");
       if(j.suppressed!==undefined&&(!j.suppressed||typeof j.suppressed!=="object"||Array.isArray(j.suppressed)))throw Error("Fechas excluidas inválidas");
+      if(j.vacationSettings!==undefined&&(!j.vacationSettings||typeof j.vacationSettings!=="object"||Array.isArray(j.vacationSettings)))throw Error("Cupo de vacaciones inválido");
+      if(j.vacationHistory!==undefined&&!Array.isArray(j.vacationHistory))throw Error("Historial de vacaciones inválido");
       data=j.data;trash=j.trash||{};suppressed=j.suppressed||{};
+      vacationSettings=j.vacationSettings||{};vacationHistory=j.vacationHistory||[];
+      saveVacationMeta();
       cleanupTrash();saveTrash();
       if(j.automatico&&typeof j.automatico.enabled==="boolean"&&j.automatico.since){
         config=j.automatico;saveConfig();
       }
-      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
+      save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
       $("backupStatus").textContent="Copia importada correctamente.";
     }catch(e){$("backupStatus").textContent="No se pudo importar: el archivo no parece una copia válida.";}
     ev.target.value="";
@@ -354,14 +431,15 @@
   setInterval(tick,60000);
   if("serviceWorker" in navigator&&location.protocol.startsWith("http"))
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
-  syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
+  syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
   // API limitada para nube y asistente: nunca permite modificar una jornada sin confirmación desde su interfaz.
   window.miJornadaBridge={
-    read:function(){return {app:"Mi Jornada",version:4,data:JSON.parse(JSON.stringify(data)),automatico:JSON.parse(JSON.stringify(config)),trash:JSON.parse(JSON.stringify(trash)),suppressed:JSON.parse(JSON.stringify(suppressed))};},
+    read:function(){return {app:"Mi Jornada",version:5,data:JSON.parse(JSON.stringify(data)),automatico:JSON.parse(JSON.stringify(config)),trash:JSON.parse(JSON.stringify(trash)),suppressed:JSON.parse(JSON.stringify(suppressed)),vacationSettings:JSON.parse(JSON.stringify(vacationSettings)),vacationHistory:JSON.parse(JSON.stringify(vacationHistory))};},
     get:function(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s))throw Error("Fecha incorrecta");return JSON.parse(JSON.stringify(entry(s)));},
     update:function(s,record){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!record||typeof record!=="object")throw Error("Registro no válido");
       validateRecord(record);
+      logVacationChange(s,data[s],record);
       data[s]={...record,auto:false};delete trash[s];delete suppressed[s];saveTrash();
       save();renderCalendar();loadEntry();renderSummary();renderTrash();
     },
@@ -374,10 +452,15 @@
       if(payload.trash!==undefined&&(!payload.trash||typeof payload.trash!=="object"||Array.isArray(payload.trash)))throw Error("Papelera inválida");
       if(payload.suppressed!==undefined&&(!payload.suppressed||typeof payload.suppressed!=="object"||Array.isArray(payload.suppressed)))throw Error("Exclusiones inválidas");
       data=JSON.parse(JSON.stringify(payload.data));config=JSON.parse(JSON.stringify(payload.automatico));
+      if(payload.vacationSettings!==undefined&&(!payload.vacationSettings||typeof payload.vacationSettings!=="object"||Array.isArray(payload.vacationSettings)))throw Error("Cupo de vacaciones inválido");
+      if(payload.vacationHistory!==undefined&&!Array.isArray(payload.vacationHistory))throw Error("Historial de vacaciones inválido");
       trash=JSON.parse(JSON.stringify(payload.trash||{}));suppressed=JSON.parse(JSON.stringify(payload.suppressed||{}));
+      vacationSettings=JSON.parse(JSON.stringify(payload.vacationSettings||{}));
+      vacationHistory=JSON.parse(JSON.stringify(payload.vacationHistory||[]));
+      saveVacationMeta();
       cleanupTrash();saveTrash();saveConfig();save();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();
     },
-    redraw:function(){renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();}
+    redraw:function(){renderAuto();renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();}
   };
 </script><script src="./dashboard.js?v=4"></script><script type="module" src="./mi-jornada-cloud.js?v=1"></script><script defer src="./mi-jornada-gemini.js?v=1"></script><script defer src="./mi-jornada-assistant.js?v=2"></script><script id="mj-view-toggle-script">
 (function(){
