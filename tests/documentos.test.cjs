@@ -15,7 +15,7 @@ test("la APK muestra Documentos y permite acceder desde el menú lateral", () =>
   assert.match(html, /id="docCompany"/);
   assert.match(html, /id="docList"/);
   assert.match(html, /mi-jornada-documents\.js/);
-  assert.match(shell, /navButton\('documents','notes','Documentos'\)/);
+  assert.match(shell, /document\.getElementById\('documentsView'\) \? navButton\('documents','notes','Documentos'\)/);
   assert.match(shell, /page === 'documents' \? 'documents'/);
   assert.match(js, /window\.AndroidDocuments/);
   assert.match(js, /miJornadaOnDocuments/);
