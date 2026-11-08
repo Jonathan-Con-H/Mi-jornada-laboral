@@ -39,7 +39,8 @@ test("Ajustes ofrece controles reales de vista, copias y nube",()=>{
 test("script, CSS y caché web llevan las nuevas versiones",()=>{
   assert.match(html,/dashboard\.css\?v=6/);
   assert.match(html,/dashboard\.js\?v=7/);
-  assert.match(worker,/mi-jornada-web-v9/);
+  const cacheVersion = worker.match(/mi-jornada-web-v(\d+)/);
+  assert.ok(cacheVersion && Number(cacheVersion[1]) >= 9, "La caché debe incluir Ajustes o una versión posterior");
   assert.match(worker,/dashboard\.css\?v=6/);
   assert.match(worker,/dashboard\.js\?v=7/);
 });
