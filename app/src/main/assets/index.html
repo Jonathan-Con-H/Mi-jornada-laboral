@@ -12,9 +12,22 @@
 #mjViewToggle:focus-visible{outline:2px solid #eebb46;outline-offset:2px}
 #mjEntryPanel{scroll-margin-top:18px}
 #mjCloseEntry{border:1px solid #47728d;background:#17364d;color:#f4faff;padding:8px 12px;border-radius:10px;font-size:.8rem}
+</style>
+<style id="mj-documents-css">
+#documentsView .mj-doc-forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+#documentsView .mj-doc-form{border:1px solid #35526b;border-radius:13px;padding:14px}
+#documentsView .mj-doc-form h3{margin:0 0 12px}
+#documentsView .mj-doc-form button{margin-top:12px}
+#documentsView .mj-doc-group{border-bottom:1px solid #7692a14d;padding:14px 0 8px;font-size:1rem}
+#documentsView .mj-doc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #7692a122;padding:12px 3px}
+#documentsView .mj-doc-row p{margin:6px 0 0}
+#documentsView .mj-doc-actions{display:flex;gap:8px;flex-wrap:wrap}
+#documentsView .mj-doc-error{color:#e87b7b}
+#documentsView .mj-doc-form .field{display:block}
+#documentsView .mj-doc-form input{width:100%}
 </style></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
-<div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
+<div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="documents">Documentos</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel hidden" id="mjEntryPanel" aria-hidden="true"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span><button type="button" id="mjCloseEntry" aria-label="Cerrar registro de horas">Cerrar ✕</button></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
@@ -30,6 +43,38 @@
 <p class="muted">La nueva hoja empezará sin registros. La anterior se guardará como historial. Los turnos seguirán inicialmente el patrón de tres semanas de mañana y una de tarde.</p>
 <button class="primary" type="submit">Crear nueva hoja</button></form>
 <p class="muted" role="status" id="serviceStatus"></p></div><div class="panel"><h2>Ajustes</h2><p class="notice" id="settingsAuto"></p><button type="button" id="settingsToggle" class="secondary">Cambiar registro automático</button><p class="muted">El registro automático se pone al día cuando abres la app; no es un fichaje real en segundo plano.</p><div class="fields"><label class="field">Descanso predeterminado (min)<input id="settingsBreak" type="number" min="0" max="480"></label><label class="field">Tiempo que se debe por jornada (min)<input id="settingsOwed" type="number" min="0" max="480"></label></div><p><button type="button" id="settingsSave" class="primary">Guardar ajustes</button></p><p class="muted" id="settingsNotice"></p><p class="muted">Turnos 06–14 y 14–22. Rotación 3 semanas de mañana y 1 de tarde. Los ajustes no modifican jornadas ya registradas.</p></div></section>
+
+<section id="documentsView" class="hidden">
+  <div class="panel">
+    <h2>Documentos</h2>
+    <p class="muted">Guarda tus nóminas y justificantes como PDF o fotografía, separados por empresa y fecha.</p>
+    <label class="field">Empresa / hoja de servicio
+      <select id="docCompany" aria-label="Empresa de los documentos"></select>
+    </label>
+    <div class="mj-doc-forms">
+      <div class="mj-doc-form">
+        <h3>📄 Nóminas</h3>
+        <label class="field">Mes y año de la nómina
+          <input type="month" id="docPayrollMonth" required>
+        </label>
+        <button type="button" id="docPayrollBtn" class="primary">Subir nómina</button>
+      </div>
+      <div class="mj-doc-form">
+        <h3>📎 Justificantes</h3>
+        <label class="field">Día de la ausencia o permiso
+          <input type="date" id="docJustDay" required>
+        </label>
+        <button type="button" id="docJustBtn" class="primary">Subir justificante</button>
+      </div>
+    </div>
+    <p class="notice" role="status" aria-live="polite" id="docStatus">Documentos privados de este móvil.</p>
+    <p class="muted"><strong>Importante:</strong> los archivos se guardan únicamente en esta instalación de Android. No se incluyen en la copia JSON de jornadas ni se sincronizan con la nube. Conserva los originales antes de borrar o desinstalar la app. Máximo 25 MB por archivo.</p>
+  </div>
+  <div class="panel">
+    <div class="row"><h2>Mis archivos</h2><button type="button" id="docRefresh" class="secondary">Actualizar lista</button></div>
+    <div id="docList" aria-live="polite"></div>
+  </div>
+</section>
 <section id="cloudView" class="hidden">
   <div class="panel">
     <h2 style="margin-top:0;font-size:1.15rem">Mis jornadas en la nube</h2>
@@ -334,7 +379,7 @@
   document.querySelectorAll("button.tab").forEach(b=>b.addEventListener("click",()=>{
     hideEntryPanel();
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));
-    ["calendar","summary","backup","cloud","vacations","settings"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
+    ["calendar","summary","backup","documents","cloud","vacations","settings"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
     if(b.dataset.tab==="summary")renderSummary();if(b.dataset.tab==="vacations")renderVacations();if(b.dataset.tab==="settings")renderSettings();
   }));
   $("exportBtn").onclick=()=>{
@@ -696,7 +741,7 @@ window.addEventListener("mi-jornada:open-tool", function (event) {
   }
 });
 
-</script><script src="./dashboard.js?v=9"></script><script src="./mi-jornada-gemini.js?v=2"></script><script src="./mi-jornada-assistant.js?v=3"></script>
+</script><script src="./dashboard.js?v=9"></script><script src="./mi-jornada-documents.js?v=1"></script><script src="./mi-jornada-gemini.js?v=2"></script><script src="./mi-jornada-assistant.js?v=3"></script>
 <script id="mj-view-toggle-script">
 (function(){
   var viewport=document.querySelector('meta[name="viewport"]');
