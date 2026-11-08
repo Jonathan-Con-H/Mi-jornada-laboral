@@ -1,5 +1,5 @@
 
-name: Generar APK de Mi Jornada
+name: Compilar APK Android de pruebas (NO instalar como actualización)
 
 on:
   workflow_dispatch:
@@ -32,8 +32,10 @@ jobs:
       - name: Compilar APK
         run: ./gradle-8.7/bin/gradle assembleDebug
 
-      - name: Guardar APK
+      # Este APK se firma con la clave efímera del runner. No se debe ofrecer
+      # como actualización segura de una aplicación Android ya instalada.
+      - name: Guardar APK DE PRUEBAS (firma temporal)
         uses: actions/upload-artifact@v4
         with:
-          name: Mi-Jornada-APK
+          name: Mi-Jornada-APK-DEPURACION-NO-ACTUALIZAR
           path: app/build/outputs/apk/debug/app-debug.apk
