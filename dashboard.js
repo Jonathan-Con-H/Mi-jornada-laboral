@@ -48,6 +48,7 @@
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
+    navButton('documents','notes','Documentos') +
     navButton('settings','settings','Ajustes') +
     (document.getElementById('serviceList') ? navButton('services','save','Hojas de servicio') : '') +
     navButton('backup','save','Copias de seguridad') +
@@ -266,7 +267,7 @@
     }
     const tabPage = page === 'summary' ? 'summary' :
       page === 'backup' ? 'backup' : page === 'vacations' ? (document.getElementById('vacationsView') ? 'vacations' : 'vacation') :
-      page === 'services' ? 'settings' : page === 'settings' ? 'settings' : 'calendar';
+      page === 'services' ? 'settings' : page === 'settings' ? 'settings' : page === 'documents' ? 'documents' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
@@ -278,7 +279,8 @@
       page === 'summary' ? $mj('summaryView') :
       page === 'backup' ? $mj('backupView') :
       page === 'vacations' ? ($mj('vacationView') || $mj('vacationsView')) :
-      page === 'services' ? $mj('serviceList') : $mj('calendarView');
+      page === 'services' ? $mj('serviceList') :
+      page === 'documents' ? $mj('documentsView') : $mj('calendarView');
     if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
     if (page === 'notes') $mj('notes').focus({preventScroll:true});
   }

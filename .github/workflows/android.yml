@@ -36,6 +36,8 @@ jobs:
           cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js firebase-web-config.js app/src/main/assets/
           test -s app/src/main/assets/dashboard.css
           test -s app/src/main/assets/dashboard.js
+          node --check app/src/main/assets/mi-jornada-documents.js
+          node --test tests/android.test.js tests/documentos.test.cjs
           node --check app/src/main/assets/dashboard.js
           node --check app/src/main/assets/mi-jornada-assistant.js
           node --check app/src/main/assets/mi-jornada-gemini.js
