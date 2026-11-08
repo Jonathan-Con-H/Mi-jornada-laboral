@@ -8,6 +8,7 @@
     pie:"M12 3a9 9 0 1 0 9 9 M12 3v9h9",
     notes:"M5 3h14v18H5z M9 8h6 M9 12h6 M9 16h4",
     umbrella:"M3 12a9 9 0 0 1 18 0H3 M12 12v7a3 3 0 0 0 6 0",
+    "clock-3":"M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 12h5",
     "heart-pulse":"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8 M3.5 12h4l2-3 3 6 2-3h5",
     handshake:"M2 11l4-4 4 1 3-1 5 5-5 5-2-1-2 2-3-1-4-4 M22 11l-4-4-4 1 M9 11l3-2 M6 15l2 2",
     stamp:"M7 20h10 M6 16h12v4H6z M9 16v-3a3 3 0 0 1 1-2V7a3 3 0 0 1 6 0v4a3 3 0 0 1 1 2v3",
@@ -119,7 +120,8 @@
       const key = iso(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
       const e = entry(key);
       button.classList.toggle('has-extra', Number(e.extraMins) > 0);
-      const absenceIcon={vacation:"umbrella",sick:"heart-pulse",paid_leave:"handshake",justified:"stamp"}[e.kind];
+      const absenceIcon=e.kind==="work"&&Number(e.hourlyLeaveMins)>0?"clock-3":
+        ({vacation:"umbrella",sick:"heart-pulse",paid_leave:"handshake",justified:"stamp"}[e.kind]);
       if(absenceIcon){
         const symbol=document.createElement("span");symbol.className="absence-symbol";
         symbol.innerHTML=glyph(absenceIcon);button.appendChild(symbol);
@@ -132,9 +134,10 @@
         e.kind === 'justified' ? 'ausencia justificada' : e.kind === 'rest' ? 'día libre' :
         (e.shift === 'morning' ? 'turno de mañana' : 'turno de tarde');
       const extras = Number(e.extraMins) > 0 ? ', con horas extra' : '';
+      const hourly = Number(e.hourlyLeaveMins) > 0 ? ', con permiso por horas' : '';
       const registered = data[key] ? ', jornada registrada' : '';
       button.setAttribute('aria-label', day + ' de ' + monthLabel(viewDate) + ', ' +
-        desc + (isHoliday ? ', festivo nacional habitual' : '') + extras + registered);
+        desc + (isHoliday ? ', festivo orientativo' : '') + extras + hourly + registered);
     });
   }
   function updateInsights() {
