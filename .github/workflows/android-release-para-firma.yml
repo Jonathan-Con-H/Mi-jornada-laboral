@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/android-release-para-firma.yml
+      - tests/documentos.test.cjs
   workflow_dispatch:
 permissions:
   contents: read
