@@ -5,3 +5,10 @@ local.properties
 .idea/
 *.iml
 .DS_Store
+
+# La clave de firma jamás se sube a un repositorio público
+*.jks
+*.keystore
+*.p12
+keystore.properties
+*.apk
