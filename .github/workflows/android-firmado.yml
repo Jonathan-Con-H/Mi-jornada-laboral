@@ -45,12 +45,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js firebase-web-config.js app/src/main/assets/
+          cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js mi-jornada-documents.js firebase-web-config.js app/src/main/assets/
           test -s app/src/main/assets/dashboard.css
           test -s app/src/main/assets/dashboard.js
           node --check app/src/main/assets/dashboard.js
           node --check app/src/main/assets/mi-jornada-assistant.js
           node --check app/src/main/assets/mi-jornada-gemini.js
+          node --check app/src/main/assets/mi-jornada-documents.js
 
       - name: Compilar APK de distribución
         shell: bash
