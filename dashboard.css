@@ -159,3 +159,12 @@ main.wrap{padding:14px 8px 98px}
 #settingsView .field{background:#102e43;border-radius:12px;padding:12px}
 #settingsView .field strong{color:#f5f8fc;font-size:1.02rem}
 #settingsView .actions button{min-width:165px}
+
+/* En móvil, abrir el mismo menú completo que en escritorio. */
+.mj-menu-toggle{display:none}
+@media(max-width:850px){
+  .mj-menu-toggle{display:flex;align-items:center;justify-content:center;margin-left:auto;min-width:40px;height:40px;padding:8px;border:1px solid #2c5876;border-radius:10px;background:#11334c;color:#f3f9ff}
+  .mj-menu-toggle .mj-icon{width:24px;height:24px}
+  .mj-sidebar.is-open .mj-sidebar-menu{display:flex;flex:initial;padding:12px 0 7px}
+  .mj-sidebar.is-open .mj-sidebar-foot{display:flex;padding-top:12px}
+}
