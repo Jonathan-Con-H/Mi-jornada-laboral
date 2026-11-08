@@ -4,6 +4,7 @@
 (function () {
   "use strict";
   const SDK = "13.2.0";
+  const RESPONSE_TIMEOUT_MS = 90000;
   const CONSENT_KEY = "miJornada.gemini.compartirContexto.v1";
   let model = null, appCheck = null, loading = null;
 
@@ -31,8 +32,8 @@
       const controller = new AbortController();
       try {
         return await withTimeout(
-          generativeModel.generateContent(prompt, { signal: controller.signal, timeout: 35000 }),
-          35000,
+          generativeModel.generateContent(prompt, { signal: controller.signal, timeout: RESPONSE_TIMEOUT_MS }),
+          RESPONSE_TIMEOUT_MS,
           "Gemini tarda demasiado en responder. Puedes volver a intentarlo sin recargar la página.",
           () => controller.abort()
         );
@@ -112,7 +113,13 @@
       // Si App Check no puede emitir un token válido, no hacer la petición a Gemini.
       await check.getToken(appCheck);
       const backend = ai.getAI(app, { backend: new ai.GoogleAIBackend() });
-      model = ai.getGenerativeModel(backend, { model: "gemini-3.8-flash" });
+      model = ai.getGenerativeModel(backend, {
+        model: "gemini-3.8-flash",
+        generationConfig: {
+          thinkingConfig: { thinkingLevel: ai.ThinkingLevel.LOW },
+          maxOutputTokens: 2048
+        }
+      });
       return model;
     })();
     try { return await loading; } finally { loading = null; }
