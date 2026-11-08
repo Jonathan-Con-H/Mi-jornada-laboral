@@ -4,6 +4,11 @@ plugins {
 }
 
 android {
+    // Conservar el mismo comportamiento Android de la versión instalada.
+    // La versión 1.8 es de distribución manual; no se publica en Google Play.
+    lint {
+        disable 'ExpiredTargetSdkVersion'
+    }
     namespace 'es.mijornada.app'
     compileSdk 35
 
