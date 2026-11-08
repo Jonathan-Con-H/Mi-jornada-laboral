@@ -5,12 +5,6 @@ name: Mi Jornada - APK Android firmado
 # No usar la clave de depuración efímera de los runners de GitHub.
 on:
   workflow_dispatch:
-  # Build firmado en la rama de preparación, sin publicar ni modificar main.
-  push:
-    branches:
-      - feature/documentos-nominas-justificantes
-    paths:
-      - '.github/workflows/android-firmado.yml'
 
 permissions:
   contents: read
