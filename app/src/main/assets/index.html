@@ -6,7 +6,7 @@
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 .day.vacation{background:#eaf2ff;border:2px solid #2563eb}.day.sick,.day.paid_leave,.day.justified{background:#fff4e0;border:2px solid #d97706}.day.suppressed{opacity:.6}.trash-entry{padding:10px 0;border-top:1px solid #eee;display:flex;justify-content:space-between}
 .service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
-</style></head>
+</style><link rel="stylesheet" href="./dashboard.css?v=8"></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
@@ -55,7 +55,7 @@
   </div>
 </section>
 <section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">También puedes exportar un JSON como copia adicional, aunque uses la nube.</p><p class="muted" id="backupStatus"></p><h3>Papelera (30 días)</h3><div id="trashList"></div></div></section>
-<div class="foot">Mi Jornada · Versión de prueba · Los datos son personales y se guardan localmente en este navegador.</div></main>
+<div class="foot">Mi Jornada · Android 1.5 · Los datos son personales y se guardan localmente en este navegador.</div></main>
 <script>
 
   "use strict";
@@ -623,4 +623,57 @@
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
   syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();
 
-</script></body></html>
+
+// API del asistente web adaptada a las hojas de servicio locales de Android.
+window.miJornadaBridge = {
+  read: function () {
+    return {app:"Mi Jornada",version:5,data:clone(data),automatico:clone(config),
+      trash:clone(trash),suppressed:clone(suppressed),vacationSettings:clone(vacationSettings)};
+  },
+  get: function (date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || iso(parse(date)) !== date)
+      throw Error("Fecha incorrecta");
+    return clone(entry(date));
+  },
+  update: function (date, record) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || iso(parse(date)) !== date ||
+        !record || typeof record !== "object" || Array.isArray(record))
+      throw Error("Registro no válido");
+    if (!["work","rest","vacation","sick","paid_leave","justified"].includes(record.kind))
+      throw Error("Tipo de día no válido");
+    if (typeof record.notes !== "string" || record.notes.length > 3000)
+      throw Error("Apuntes no válidos");
+    if (record.kind === "work") {
+      if (!["morning","afternoon"].includes(record.shift) ||
+          !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(record.start) ||
+          !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(record.end) || duration(record) <= 0)
+        throw Error("Turno u horario no válido");
+      const mins = duration(record) * 60;
+      for (const [value, maximum] of [
+        [record.breakMins, mins], [record.hourlyLeaveMins, mins],
+        [record.extraMins, 1440], [record.owed, 24]
+      ]) {
+        if (!Number.isFinite(value) || value < 0 || value > maximum)
+          throw Error("Los minutos indicados no son válidos");
+      }
+      if (record.breakMins + record.hourlyLeaveMins > mins)
+        throw Error("Descanso y permiso superan la jornada");
+    }
+    data[date] = {...clone(record), auto:false};
+    delete trash[date]; delete suppressed[date];
+    saveMeta(); save();
+    renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
+  },
+  redraw: function () {
+    renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
+  }
+};
+// Usar Firebase nativo de la APK sin cambiar el origen de los datos.
+window.addEventListener("mi-jornada:open-tool", function (event) {
+  if (event.detail && event.detail.page === "cloud") {
+    const tab = document.querySelector('button.tab[data-tab="cloud"]');
+    if (tab) tab.click();
+  }
+});
+
+</script><script src="./dashboard.js?v=8"></script><script src="./mi-jornada-gemini.js?v=2"></script><script src="./mi-jornada-assistant.js?v=3"></script></body></html>

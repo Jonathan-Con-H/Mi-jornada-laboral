@@ -41,6 +41,17 @@ jobs:
             https://services.gradle.org/distributions/gradle-8.7-bin.zip -o gradle.zip
           unzip -q gradle.zip
 
+      - name: Sincronizar diseño y asistente web dentro de Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js firebase-web-config.js app/src/main/assets/
+          test -s app/src/main/assets/dashboard.css
+          test -s app/src/main/assets/dashboard.js
+          node --check app/src/main/assets/dashboard.js
+          node --check app/src/main/assets/mi-jornada-assistant.js
+          node --check app/src/main/assets/mi-jornada-gemini.js
+
       - name: Compilar APK de distribución
         shell: bash
         run: ./gradle-8.7/bin/gradle --no-daemon assembleRelease
