@@ -1,4 +1,4 @@
-const CACHE_NAME = "mi-jornada-web-v9";
+const CACHE_NAME = "mi-jornada-web-v10";
 const OFFLINE_FILES = ["./", "./index.html", "./manifest.webmanifest", "./dashboard.css?v=6", "./dashboard.js?v=7", "./firebase-web-config.js", "./mi-jornada-cloud.js?v=1", "./mi-jornada-assistant.js?v=2", "./mi-jornada-gemini.js?v=1"];
 
 self.addEventListener("install", (event) => {
