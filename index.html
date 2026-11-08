@@ -12,7 +12,12 @@
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#60A5FA"></i>Mañana</span><span><i class="dot" style="background:#2DD4BF"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#16A34A"></i>Días libres</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
-<div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
+<div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option>
+<option value="vacation">Vacaciones</option>
+<option value="sick">Baja médica</option>
+<option value="paid_leave">Permiso retribuido</option>
+<option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" max="1440" step="1" value="0"></label>
+<label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="1440" step="1" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">La sincronización automática en la nube todavía no está conectada. Guarda una copia fuera del móvil periódicamente.</p><p class="muted" id="backupStatus"></p></div>
 <div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Papelera de jornadas</h2>
@@ -92,7 +97,7 @@
     return {kind:rest?"rest":"work",shift,
       start:shift==="morning"?"06:00":"14:00",
       end:shift==="morning"?"14:00":"22:00",
-      breakMins:30,owed:rest?0:0.5,extraMins:0,notes:""};
+      breakMins:30,owed:rest?0:0.5,extraMins:0,hourlyLeaveMins:0,notes:""};
   }
   function entry(s){return {...autoEntry(s),...(data[s]||{})};}
   function duration(e) {
@@ -101,7 +106,22 @@
     if(mins<0)mins+=1440;
     return Math.max(0,mins)/60;
   }
-  function effective(e){return Math.max(0,duration(e)-(Number(e.breakMins)||0)/60);}
+  function effective(e){return Math.max(0,duration(e)-((Number(e.breakMins)||0)+(Number(e.hourlyLeaveMins)||0))/60);}
+  const DAY_NAMES={work:"Jornada laboral",rest:"Descanso",vacation:"Vacaciones",sick:"Baja médica",paid_leave:"Permiso retribuido",justified:"Ausencia justificada"};
+  function validateRecord(e) {
+    if(!Object.prototype.hasOwnProperty.call(DAY_NAMES,e.kind))throw Error("Tipo de día no válido.");
+    if(String(e.notes||"").length>3000)throw Error("Las observaciones no pueden superar los 3000 caracteres.");
+    if(e.kind!=="work")return;
+    if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(e.start)||!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(e.end))
+      throw Error("Introduce horas válidas de entrada y salida.");
+    const minutes=duration(e)*60;
+    if(minutes<=0)throw Error("La entrada y la salida no pueden coincidir.");
+    for(const [name,value,max] of [["Descanso",e.breakMins,minutes],["Permiso por horas",e.hourlyLeaveMins,minutes],["Tiempo que se debe",e.owed*60,1440],["Horas extra",e.extraMins,1440]]) {
+      if(!Number.isFinite(value)||value<0||value>max)throw Error(name+" no tiene una cantidad válida.");
+    }
+    if(e.breakMins+e.hourlyLeaveMins>minutes)
+      throw Error("La suma de descanso y permiso por horas supera la duración de la jornada.");
+  }
   function elapsedHours(e,s){
     if(e.kind!=="work"||!e.start||!e.end)return 0;
     if(s===today()&&e.auto&&!e.stopped){
@@ -142,7 +162,7 @@
       const d=new Date(viewDate.getFullYear(),viewDate.getMonth(),n),s=iso(d),v=entry(s),
         el=document.createElement("button");
       el.type="button";
-      el.className="day "+(v.kind==="rest"?"rest":v.shift)+(data[s]&&v.kind==="work"?" recorded":"")+(s===selected?" selected":"");
+      el.className="day "+(v.kind==="rest"?"rest":v.kind==="work"?v.shift:"absence "+v.kind)+(data[s]?" recorded":"")+(s===selected?" selected":"");
       let note=v.kind==="rest"?"DESC":v.shift==="morning"?"MAÑ":"TAR";
       if(data[s]&&v.kind==="work")note=v.stopped?"FIN":v.auto?"AUTO":"EDIT";
       el.innerHTML=`<span>${n}</span><span class="shift">${note}</span>${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
@@ -151,12 +171,14 @@
     }
   }
   function formEntry(){
+    const selectedKind=$("kind").value;
     return {
-      kind:$("kind").value,shift:$("shift").value,
+      kind:selectedKind,shift:$("shift").value,
       start:$("start").value,end:$("end").value,
-      breakMins:Number($("breakMins").value)||0,
-      owed:(Number($("owed").value)||0)/60,
-      extraMins:Math.max(0,Number($("extraMins").value)||0),
+      breakMins:selectedKind==="work"?Number($("breakMins").value):0,
+      owed:selectedKind==="work"?Number($("owed").value)/60:0,
+      extraMins:selectedKind==="work"?Number($("extraMins").value):0,
+      hourlyLeaveMins:selectedKind==="work"?Number($("hourlyLeaveMins").value):0,
       notes:$("notes").value
     };
   }
@@ -171,21 +193,21 @@
     const e=entry(selected),has=!!data[selected],work=e.kind==="work";
     $("entryTitle").textContent="Registro del "+fmt(selected);
     $("autoShift").textContent=e.shift==="morning"?"Turno previsto: mañana":"Turno previsto: tarde";
-    if(!work)$("dayHint").textContent="Día de descanso. Puedes cambiarlo si trabajaste.";
+    if(!work)$("dayHint").textContent=DAY_NAMES[e.kind]+". Puedes consultar sus detalles o modificar el registro.";
     else if(e.stopped)$("dayHint").textContent="Jornada detenida a las "+e.end+". Puedes corregirla o restablecerla.";
     else if(has&&e.auto)$("dayHint").textContent="Jornada apuntada automáticamente según tu horario. Puedes detenerla con el botón.";
     else if(has)$("dayHint").textContent="Jornada guardada manualmente. Puedes corregirla.";
     else if(config.enabled&&selected>=config.since)$("dayHint").textContent="Jornada prevista. Se apuntará automáticamente al llegar la hora de entrada.";
     else $("dayHint").textContent="Jornada prevista, todavía sin registrar.";
-    for(const id of ["kind","shift","start","end","breakMins","owed","extraMins","notes"]){
+    for(const id of ["kind","shift","start","end","breakMins","owed","extraMins","hourlyLeaveMins","notes"]){
       $(id).value=id==="owed"?String(Math.round((Number(e.owed)||0)*60)):(e[id]??"");
     }
     updateStopButton();preview();
   }
   function preview(){
     const e=formEntry();
-    if(e.kind==="rest"){$("calcPreview").textContent="Día de descanso: 0 h de jornada.";return;}
-    let message=`Jornada total: ${hours(duration(e))}. Descanso: ${e.breakMins} min. Trabajo efectivo: ${hours(effective(e))}. Tiempo que se debe: ${Math.round((Number(e.owed)||0)*60)} min. Horas extras: ${Math.round(Number(e.extraMins)||0)} min.`;
+    if(e.kind!=="work"){$("calcPreview").textContent=(DAY_NAMES[e.kind]||"Ausencia")+": no genera horas de jornada ni tiempo debido.";return;}
+    let message=`Jornada total: ${hours(duration(e))}. Descanso: ${e.breakMins} min. Trabajo efectivo: ${hours(effective(e))}. Tiempo que se debe: ${Math.round((Number(e.owed)||0)*60)} min. Horas extras: ${Math.round(Number(e.extraMins)||0)} min. Permiso por horas: ${Math.round(Number(e.hourlyLeaveMins)||0)} min.`;
     if(data[selected]&&data[selected].auto&&!data[selected].stopped&&selected===today()){
       message+=` Acumulado hasta ahora: ${hours(elapsedHours(data[selected],selected))} (según horario previsto).`;
     }
@@ -201,15 +223,16 @@
       const e=entry(s);
       const elapsed=e.kind==="work"?elapsedHours(e,s):0;
       const restMinutes=Math.max(0,Number(e.breakMins)||0);
-      const net=Math.max(0,elapsed-restMinutes/60);
+      const permitMinutes=Math.max(0,Number(e.hourlyLeaveMins)||0);
+      const net=Math.max(0,elapsed-(restMinutes+permitMinutes)/60);
       if(e.kind==="work"){work++;total+=elapsed;effectiveTotal+=net;}
       owed+=Number(e.owed)||0;
       extra+=Math.max(0,Number(e.extraMins)||0)/60;
-      const state=e.stopped?"Detenida":e.auto?"Automática":"Manual";
-      rows.push(`<div style="border-top:1px solid #e5edf1;padding:10px 0"><strong>${fmt(s)} · ${state}</strong><div class="muted" style="margin-top:5px">${e.kind==="work"?`Jornada: ${hours(elapsed)} · Efectivas: ${hours(net)} · Descanso: ${restMinutes} min`:"Descanso"} · Debidas: ${hours(Number(e.owed)||0)}${Number(e.extraMins)>0?` · <span style="color:#7C3AED;font-weight:800">Extras: ${hours(Number(e.extraMins)/60)}</span>`:""}</div>${e.notes?`<div class="muted" style="margin-top:4px">${escapeHtml(e.notes)}</div>`:""}</div>`);
+      const state=e.kind!=="work"?(DAY_NAMES[e.kind]||"Ausencia"):e.stopped?"Detenida":e.auto?"Automática (estimada)":"Manual";
+      rows.push(`<div style="border-top:1px solid #e5edf1;padding:10px 0"><strong>${fmt(s)} · ${state}</strong><div class="muted" style="margin-top:5px">${e.kind==="work"?`Jornada: ${hours(elapsed)} · Efectivas: ${hours(net)} · Descanso: ${restMinutes} min${permitMinutes?" · Permiso por horas: "+permitMinutes+" min":""}`:DAY_NAMES[e.kind]||"Ausencia"} · Debidas: ${hours(Number(e.owed)||0)}${Number(e.extraMins)>0?` · <span style="color:#7C3AED;font-weight:800">Extras: ${hours(Number(e.extraMins)/60)}</span>`:""}</div>${e.notes?`<div class="muted" style="margin-top:4px">${escapeHtml(e.notes)}</div>`:""}</div>`);
     }
     $("sDays").textContent=work;$("sHours").textContent=hours(total);$("sEffective").textContent=hours(effectiveTotal);$("sOwed").textContent=hours(owed);$("sExtra").textContent=hours(extra);
-    $("sumNote").textContent="Solo se suman los días registrados. Jornada = tiempo de entrada a salida; horas efectivas = jornada menos descanso. El tiempo que se debe se contabiliza aparte. En jornadas en curso, el cálculo es provisional. Las horas extras se anotan manualmente."
+    $("sumNote").textContent="Se incluyen registros manuales y jornadas automáticas estimadas. Jornada = tiempo de entrada a salida; horas efectivas = jornada menos descanso y permisos por horas. Las ausencias no generan jornada ni deuda; el tiempo que se debe se contabiliza aparte."
     $("monthRows").innerHTML=rows.length?'<h3 style="font-size:1rem">Días registrados</h3>'+rows.join(""):'<p class="muted">Todavía no hay jornadas apuntadas para este mes.</p>';
   }
   function renderTrash() {
@@ -249,7 +272,13 @@
   }
   $("entryForm").addEventListener("submit",ev=>{
     ev.preventDefault();
-    data[selected]={...formEntry(),auto:false,stopped:!!(data[selected]&&data[selected].stopped)};
+    let edited;
+    try { edited=formEntry();validateRecord(edited); }
+    catch(err){alert(err.message);return;}
+    const previous=data[selected];
+    if(previous&&previous.kind!==edited.kind &&
+      !confirm("¿Cambiar "+DAY_NAMES[previous.kind]+" por "+DAY_NAMES[edited.kind]+" el "+fmt(selected)+"? Se sustituirá el registro de ese día."))return;
+    data[selected]={...edited,auto:false,stopped:edited.kind==="work"&&!!(previous&&previous.stopped)};
     delete suppressed[selected];delete trash[selected];saveTrash();
     save();renderCalendar();loadEntry();renderSummary();renderTrash();
     $("dayHint").textContent="Día guardado en este dispositivo.";
@@ -257,7 +286,9 @@
   $("stopToday").addEventListener("click",()=>{
     const now=new Date(),e=formEntry();
     if(selected!==today()||e.kind!=="work"||!e.start||nowMins(now)<timeMins(e.start))return;
-    data[selected]={...e,end:clock(now),auto:false,stopped:true};
+    e.end=clock(now);
+    try {validateRecord(e);}catch(err){alert(err.message);return;}
+    data[selected]={...e,auto:false,stopped:true};
     delete suppressed[selected];delete trash[selected];saveTrash();
     save();renderCalendar();loadEntry();renderSummary();renderTrash();
   });
@@ -276,7 +307,7 @@
     if(config.enabled)config.since=today();
     saveConfig();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
   });
-  ["kind","shift","start","end","breakMins","owed","extraMins","notes"].forEach(id=>$(id).addEventListener("input",()=>{preview();updateStopButton();}));
+  ["kind","shift","start","end","breakMins","owed","extraMins","hourlyLeaveMins","notes"].forEach(id=>$(id).addEventListener("input",()=>{preview();updateStopButton();}));
   $("prevMonth").onclick=()=>{viewDate.setMonth(viewDate.getMonth()-1);renderCalendar();};
   $("nextMonth").onclick=()=>{viewDate.setMonth(viewDate.getMonth()+1);renderCalendar();};
   $("sumPrev").onclick=()=>{sumDate.setMonth(sumDate.getMonth()-1);renderSummary();};
@@ -330,6 +361,7 @@
     get:function(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s))throw Error("Fecha incorrecta");return JSON.parse(JSON.stringify(entry(s)));},
     update:function(s,record){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!record||typeof record!=="object")throw Error("Registro no válido");
+      validateRecord(record);
       data[s]={...record,auto:false};delete trash[s];delete suppressed[s];saveTrash();
       save();renderCalendar();loadEntry();renderSummary();renderTrash();
     },
