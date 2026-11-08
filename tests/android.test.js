@@ -142,3 +142,13 @@ test("renombrar una empresa actualiza su pestaña sin cambiar jornadas",()=>{
   assert.equal(state.items[0].data[h.oldDay].notes,h.original.notes);
   assert.match(h.element("serviceList").children[0].textContent,/Mi empresa actual/);
 });
+
+
+test("calendario ensancha solo las casillas sin cambiar colores de turnos",()=>{
+  const css=fs.readFileSync(path.join(__dirname,"../dashboard.css"),"utf8");
+  assert.match(css,/grid-template-columns:repeat\(7,minmax\(84px,1fr\)\)/);
+  assert.match(css,/grid-template-columns:repeat\(7,minmax\(68px,1fr\)\)/);
+  assert.match(css,/grid-template-columns:repeat\(7,minmax\(62px,1fr\)\)/);
+  assert.match(css,/\.day\.morning\{border:3px solid #38BDF8\}/);
+  assert.match(css,/\.day\.afternoon\{border:3px solid #14B8A6\}/);
+});
