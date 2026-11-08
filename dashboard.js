@@ -8,6 +8,9 @@
     pie:"M12 3a9 9 0 1 0 9 9 M12 3v9h9",
     notes:"M5 3h14v18H5z M9 8h6 M9 12h6 M9 16h4",
     umbrella:"M3 12a9 9 0 0 1 18 0H3 M12 12v7a3 3 0 0 0 6 0",
+    "heart-pulse":"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8 M3.5 12h4l2-3 3 6 2-3h5",
+    handshake:"M2 11l4-4 4 1 3-1 5 5-5 5-2-1-2 2-3-1-4-4 M22 11l-4-4-4 1 M9 11l3-2 M6 15l2 2",
+    stamp:"M7 20h10 M6 16h12v4H6z M9 16v-3a3 3 0 0 1 1-2V7a3 3 0 0 1 6 0v4a3 3 0 0 1 1 2v3",
     sparkles:"m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3z M19 17l.7 1.3L21 19l-1.3.7L19 21l-.7-1.3L17 19l1.3-.7L19 17z",
     settings:"M12 3v2 M12 19v2 M3 12h2 M19 12h2 M5.6 5.6 7 7 M17 17l1.4 1.4 M18.4 5.6 17 7 M7 17l-1.4 1.4 M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8",
     cloud:"M6 18h13a4 4 0 0 0 0-8h-1a6 6 0 0 0-11.6-1.4A5 5 0 0 0 6 18z",
@@ -41,7 +44,7 @@
     navButton('summary','chart','Resumen') +
     navButton('stats','pie','Estadísticas') +
     navButton('notes','notes','Notas') +
-    navButton('vacations','umbrella','Vacaciones',true) +
+    navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
     navButton('settings','settings','Ajustes') +
     navButton('backup','save','Copias de seguridad') +
@@ -57,6 +60,7 @@
     ['register','clock','Registro'],
     ['summary','chart','Resumen'],
     ['notes','notes','Notas'],
+    ['vacations','umbrella','Vacaciones'],
     ['ai','sparkles','IA'],
     ['settings','settings','Ajustes']
   ];
@@ -98,7 +102,9 @@
       '<span><i class="dot"></i>Tarde</span>' +
       '<span><i class="dot"></i>Horas extras</span>' +
       '<span><i class="dot"></i>Festivo</span>' +
-      '<span><i class="dot" style="color:#e44b51"></i>Registrada</span>';
+      '<span><i class="dot" style="color:#e44b51"></i>Registrada</span>' +
+      '<span><i class="dot" style="color:#1D4ED8"></i>Vacaciones</span>' +
+      '<span><i class="dot" style="color:#d97706"></i>Ausencias</span>';
   }
   const $mj = function (id) { return document.getElementById(id); };
   function hhmm(mins) {
@@ -113,10 +119,17 @@
       const key = iso(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
       const e = entry(key);
       button.classList.toggle('has-extra', Number(e.extraMins) > 0);
+      const absenceIcon={vacation:"umbrella",sick:"heart-pulse",paid_leave:"handshake",justified:"stamp"}[e.kind];
+      if(absenceIcon){
+        const symbol=document.createElement("span");symbol.className="absence-symbol";
+        symbol.innerHTML=glyph(absenceIcon);button.appendChild(symbol);
+      }
       const monthDay = key.slice(5);
       const isHoliday = holidays.has(monthDay);
       button.classList.toggle('holiday', isHoliday);
-      const desc = e.kind === 'rest' ? 'día libre' :
+      const desc = e.kind === 'vacation' ? 'vacaciones' :
+        e.kind === 'sick' ? 'baja médica' : e.kind === 'paid_leave' ? 'permiso retribuido' :
+        e.kind === 'justified' ? 'ausencia justificada' : e.kind === 'rest' ? 'día libre' :
         (e.shift === 'morning' ? 'turno de mañana' : 'turno de tarde');
       const extras = Number(e.extraMins) > 0 ? ', con horas extra' : '';
       const registered = data[key] ? ', jornada registrada' : '';
@@ -131,14 +144,19 @@
     const hasRecord = Object.prototype.hasOwnProperty.call(data, current);
     $mj('mjTodayTitle').textContent = 'Hoy, ' + currentDate.toLocaleDateString('es-ES', {day:'numeric',month:'long'});
     $mj('mjShiftChip').textContent = e.kind === 'rest' ? 'Libre' : (e.shift === 'morning' ? 'Mañana' : 'Tarde');
-    $mj('mjTodayShift').textContent = e.kind === 'rest' ? 'Sin turno de trabajo' : 'Turno: ' + e.start + ' – ' + e.end;
+    $mj('mjTodayShift').textContent = e.kind === 'work' ? 'Turno: ' + e.start + ' – ' + e.end :
+      e.kind === 'rest' ? 'Sin turno de trabajo' : 'Ausencia registrada';
     $mj('mjTodayBreak').textContent = 'Descanso: ' + (Number(e.breakMins) || 0) + ' min';
     const state = $mj('mjTodayState');
     const stateText = $mj('mjTodayStateText');
-    state.classList.toggle('ok', hasRecord && e.kind === 'work');
+    state.classList.toggle('ok', hasRecord && e.kind === 'work' && !e.auto);
     stateText.textContent = e.kind === 'rest' ? 'Día libre' :
+      e.kind === 'vacation' ? 'Vacaciones registradas' :
+      e.kind === 'sick' ? 'Baja médica registrada' :
+      e.kind === 'paid_leave' ? 'Permiso retribuido registrado' :
+      e.kind === 'justified' ? 'Ausencia justificada registrada' :
       !hasRecord ? 'Pendiente de registrar' :
-      e.auto && !e.stopped ? 'Apuntada automáticamente' : 'Jornada registrada';
+      e.auto && !e.stopped ? 'Jornada estimada automáticamente' : 'Jornada registrada';
     $mj('mjPanelMonth').textContent = monthLabel(viewDate);
     let days = 0, worked = 0, extra = 0, owed = 0, owedAll = 0;
     // Deuda acumulada de todos los días trabajados y registrados hasta hoy.
@@ -183,7 +201,7 @@
       return;
     }
     const tabPage = page === 'summary' || page === 'stats' ? 'summary' :
-      page === 'backup' ? 'backup' : 'calendar';
+      page === 'backup' ? 'backup' : page === 'vacations' ? 'vacation' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
@@ -193,7 +211,8 @@
       page === 'notes' ? $mj('notes') :
       page === 'settings' ? $mj('toggleAuto') :
       page === 'summary' || page === 'stats' ? $mj('summaryView') :
-      page === 'backup' ? $mj('backupView') : $mj('calendarView');
+      page === 'backup' ? $mj('backupView') :
+      page === 'vacations' ? $mj('vacationView') : $mj('calendarView');
     if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
     if (page === 'notes') $mj('notes').focus({preventScroll:true});
   }
