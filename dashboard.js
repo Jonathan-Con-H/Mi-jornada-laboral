@@ -47,7 +47,7 @@
     navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
     navButton('settings','settings','Ajustes') +
-    navButton('services','save','Hojas de servicio') +
+    (document.getElementById('serviceList') ? navButton('services','save','Hojas de servicio') : '') +
     navButton('backup','save','Copias de seguridad') +
     navButton('cloud','cloud','Copia en la nube') +
     '</nav><div class="mj-sidebar-foot">' + glyph('cloud') +
