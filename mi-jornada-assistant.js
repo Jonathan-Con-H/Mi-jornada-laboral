@@ -12,7 +12,7 @@ const bubble=document.createElement("button");bubble.id="mj-ai-bubble";bubble.ti
 const panel=document.createElement("section");panel.id="mj-ai-panel";panel.setAttribute("aria-label","Asistente de Mi Jornada");
 panel.innerHTML=[
 "<div class='head'><strong>✦ Asistente · Mi Jornada</strong><button id='mj-ai-full' title='Ampliar'>⛶</button><button id='mj-ai-close'>✕</button></div>",
-"<p id='mj-ai-help'>Consulta tus turnos o registra horas extra con confirmación. Para otras preguntas, Gemini usará un resumen de turnos y horas cuando esté habilitado App Check y tú autorices el envío a Google. No se comparten tus notas.</p>",
+"<p id='mj-ai-help'>Consulta turnos, registra horas extra o pide borrar y recuperar hojas de servicio con confirmación. Para otras preguntas, Gemini usará un resumen de turnos y horas cuando esté habilitado App Check y tú autorices el envío a Google. No se comparten tus notas.</p>",
 "<div id='mj-ai-chat' aria-live='polite'></div>",
 "<div id='mj-ai-confirm'><button id='mj-ai-yes'>Confirmar cambio</button><button id='mj-ai-no'>Cancelar</button></div>",
 "<form id='mj-ai-form'><input id='mj-ai-input' aria-label='Escribe a tu asistente' placeholder='Ej.: ¿Qué turno tengo mañana?' autocomplete='off'>",
@@ -71,9 +71,52 @@ function askWithGemini(q) {
     })
     .finally(() => { loading.remove(); geminiBusy = false; });
 }
+function normalized(value){
+ return String(value||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+   .replace(/[^a-z0-9]+/g," ").trim();
+}
+function chooseService(s,items,allowCurrent){
+ if(allowCurrent&&/\b(?:actual|activa|en uso)\b/.test(s))
+   return items.filter(item=>item.active);
+ const exact=items.filter(item=>s.includes(normalized(item.name)));
+ if(exact.length)return exact;
+ const match=s.match(/hoja(?:s)?(?: de servicio)?(?: de| para| llamada)?\s+(.+)$/);
+ if(!match)return [];
+ const name=match[1].trim();
+ if(!name||name==="servicio")return [];
+ return items.filter(item=>normalized(item.name)===name||normalized(item.name).includes(name));
+}
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+ const sheetQuery=normalized(s);
  proposal=null;el("mj-ai-confirm").classList.remove("visible");
+ const deleting=/\b(?:borra|borrar|elimina|eliminar|envia|mandar|manda)\b/.test(s)&&/\bhoja(?:s)?\b/.test(s);
+ const restoring=/\b(?:restaura|restaurar|recupera|recuperar)\b/.test(s)&&/\bhoja(?:s)?\b/.test(s);
+ if(deleting||restoring){
+  if(typeof bridge.services!=="function"||typeof bridge.deleteService!=="function"){
+   answer("Esta versión todavía no permite gestionar hojas desde el asistente. Actualiza Mi Jornada.");return;
+  }
+  const available=restoring?(bridge.deletedServices?bridge.deletedServices():[]):bridge.services();
+  if(!available.length){
+   answer(restoring?"No hay hojas de servicio recuperables en la papelera.":"No hay hojas de servicio disponibles.");return;
+  }
+  const matches=chooseService(sheetQuery,available,deleting);
+  if(matches.length!==1){
+   answer((matches.length?"Hay varias hojas con ese nombre. ":"Indícame el nombre de la empresa de la hoja. ")+
+     "Opciones: "+available.slice(0,10).map(item=>item.name+" (desde "+(item.startDate||item.deletedAt.slice(0,10))+")").join("; ")+".");return;
+  }
+  const target=matches[0];
+  if(deleting&&available.length===1){
+   answer("No puedo eliminar tu única hoja de servicio. Primero crea otra hoja para conservar un espacio de trabajo.");return;
+  }
+  proposal={type:restoring?"restore-service":"delete-service",id:target.id,
+    name:target.name,records:target.records};
+  answer(restoring
+    ?"¿Restaurar la hoja «"+target.name+"», con sus "+target.records+" registros? Se recuperará completa."
+    :"¿Enviar a la papelera la hoja «"+target.name+"», con sus "+target.records+
+      " registros? Dejará de verse entre las hojas activas. Puedes recuperarla durante 30 días. Confirma para continuar.");
+  el("mj-ai-confirm").classList.add("visible");return;
+ }
  const day=dateByWords(s),key=iso(day),e=bridge.get(key);
  if(/(cuant|total).*(debo|deuda|pendientes|extra)/.test(s)||/horas que debo/.test(s)){
   const snap=bridge.read(),isExtra=/extra/.test(s),now=new Date(),month=now.getMonth(),year=now.getFullYear();
@@ -111,8 +154,22 @@ window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page===
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
 el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
-el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");};
-el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
+el("mj-ai-yes").onclick=()=>{
+ if(!proposal)return;
+ const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");
+ try{
+  if(p.type==="delete-service"){
+   const result=bridge.deleteService(p.id);
+   answer("Hoja «"+result.name+"» enviada a la papelera durante 30 días, con todos sus registros.");
+  }else if(p.type==="restore-service"){
+   const result=bridge.restoreService(p.id);
+   answer("Hoja «"+result.name+"» recuperada con sus registros.");
+  }else{
+   bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");
+  }
+ }catch(error){answer("No se ha aplicado el cambio: "+(error&&error.message||"Error desconocido"));}
+};
+el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado tus datos.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
 el("mj-ai-voice").checked=voiceEnabled;
 el("mj-ai-voice").onchange=e=>{voiceEnabled=e.target.checked;localStorage.setItem(VOICE_KEY,voiceEnabled?"on":"off");if(!voiceEnabled&&window.speechSynthesis)window.speechSynthesis.cancel();};

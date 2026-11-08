@@ -1,0 +1,45 @@
+name: Preparar APK release sin firmar (firma local privada)
+
+on:
+  push:
+    branches:
+      - release/mi-jornada-1.9-completa
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener proyecto
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Instalar Gradle 8.7
+        shell: bash
+        run: |
+          curl --fail --location --silent --show-error https://services.gradle.org/distributions/gradle-8.7-bin.zip -o gradle.zip
+          unzip -q gradle.zip
+      - name: Sincronizar archivos de la aplicación
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js mi-jornada-documents.js firebase-web-config.js app/src/main/assets/
+          node --check app/src/main/assets/dashboard.js
+          node --check app/src/main/assets/mi-jornada-assistant.js
+          node --check app/src/main/assets/mi-jornada-gemini.js
+          node --check app/src/main/assets/mi-jornada-documents.js
+      - name: Compilar APK sin firmar
+        run: ./gradle-8.7/bin/gradle --no-daemon assembleRelease
+      - name: Guardar APK sin firmar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mi-Jornada-1.9-COMPLETA-SIN-FIRMAR
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 30

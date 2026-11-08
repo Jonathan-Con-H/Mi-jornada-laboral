@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.ActivityNotFoundException;
 import android.net.Uri;
+import android.util.Base64;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -30,9 +31,11 @@ import java.util.Map;
 public class MainActivity extends Activity {
     private static final int PICK_FILE_REQUEST = 1001;
     private static final int CREATE_BACKUP_REQUEST = 1002;
+    private static final int CREATE_DOCUMENT_REQUEST = 1003;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private String pendingBackupJson = null;
+    private byte[] pendingDocumentBytes = null;
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
     private boolean writeInProgress = false;
@@ -54,6 +57,7 @@ public class MainActivity extends Activity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         webView.addJavascriptInterface(new CloudBridge(), "AndroidCloud");
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
+        webView.addJavascriptInterface(new DocumentsBridge(), "AndroidDocuments");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -295,6 +299,65 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    // Exporta una nómina o justificante al destino que el usuario elija.
+    // Los documentos permanecen en la base local; no se envían a Firebase.
+    private void notifyDocument(String message, boolean success) {
+        JSONObject result = new JSONObject();
+        try {
+            result.put("ok", success);
+            result.put("message", message);
+            String quoted = JSONObject.quote(result.toString());
+            runOnUiThread(() -> {
+                if (webView != null) webView.evaluateJavascript(
+                    "window.miJornadaOnDocument && window.miJornadaOnDocument(" + quoted + ");", null);
+            });
+        } catch (JSONException ignored) { }
+    }
+
+    public class DocumentsBridge {
+        @JavascriptInterface
+        public void saveFile(String suggestedFilename, String mime, String base64) {
+            runOnUiThread(() -> {
+                if (pendingDocumentBytes != null) {
+                    notifyDocument("Termina primero de guardar el archivo anterior.", false);
+                    return;
+                }
+                if (!"application/pdf".equals(mime)
+                        && !"image/jpeg".equals(mime)
+                        && !"image/png".equals(mime)) {
+                    notifyDocument("Tipo de archivo no permitido.", false);
+                    return;
+                }
+                if (base64 == null || base64.length() > 17000000 || base64.isEmpty()) {
+                    notifyDocument("El documento es demasiado grande.", false);
+                    return;
+                }
+                try {
+                    byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                    if (bytes.length == 0 || bytes.length > 12 * 1024 * 1024) {
+                        notifyDocument("El documento supera el límite de 12 MB.", false);
+                        return;
+                    }
+                    String filename = suggestedFilename == null ? "" :
+                        suggestedFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
+                    if (filename.isEmpty() || filename.equals(".") || filename.equals("..")) {
+                        filename = "documento";
+                    }
+                    pendingDocumentBytes = bytes;
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType(mime);
+                    intent.putExtra(Intent.EXTRA_TITLE, filename);
+                    startActivityForResult(intent, CREATE_DOCUMENT_REQUEST);
+                } catch (Exception exception) {
+                    pendingDocumentBytes = null;
+                    notifyDocument("No se pudo abrir el selector para guardar el documento.", false);
+                }
+            });
+        }
+    }
+
     private void authenticate(String email, String password, boolean create) {
         String clean = email == null ? "" : email.trim();
         if (clean.isEmpty() || password == null || password.length() < 6) {
@@ -316,6 +379,25 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CREATE_DOCUMENT_REQUEST) {
+            byte[] bytes = pendingDocumentBytes;
+            pendingDocumentBytes = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+                notifyDocument("Exportación cancelada. El original sigue en Mi Jornada.", false);
+            } else if (bytes == null) {
+                notifyDocument("No se encontró el documento preparado.", false);
+            } else {
+                try (OutputStream stream = getContentResolver().openOutputStream(data.getData())) {
+                    if (stream == null) throw new IllegalStateException("No se pudo crear el archivo");
+                    stream.write(bytes);
+                    stream.flush();
+                    notifyDocument("Copia del documento guardada en la ubicación elegida.", true);
+                } catch (Exception exception) {
+                    notifyDocument("No se pudo guardar la copia. Prueba en otra carpeta.", false);
+                }
+            }
+            return;
+        }
         if (requestCode == CREATE_BACKUP_REQUEST) {
             String content = pendingBackupJson;
             pendingBackupJson = null;

@@ -5,7 +5,11 @@
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 .day.vacation{background:#eaf2ff;border:2px solid #2563eb}.day.sick,.day.paid_leave,.day.justified{background:#fff4e0;border:2px solid #d97706}.day.suppressed{opacity:.6}.trash-entry{padding:10px 0;border-top:1px solid #eee;display:flex;justify-content:space-between}
-.service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
+.service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}.service-list .service-entry{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.service-list .service-entry .service-open{flex:1;min-width:180px}
+.service-list .service-entry .service-delete{width:auto;flex:0 0 auto;text-align:center;background:#fde9e7;color:#9a3028;border:1px solid #d79892}
+.service-list .service-entry .service-delete:disabled{opacity:.5;cursor:not-allowed}
+.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
 </style><link rel="stylesheet" href="./dashboard.css?v=9">
 <style id="mj-view-toggle-css">
 #mjViewToggle{display:block;width:calc(100% - 20px);margin:0 10px 13px;background:#133753;border:1px solid #47728d;color:#fff;padding:10px 8px;border-radius:12px;font:650 .84rem system-ui;cursor:pointer}
@@ -14,22 +18,24 @@
 #mjCloseEntry{border:1px solid #47728d;background:#17364d;color:#f4faff;padding:8px 12px;border-radius:10px;font-size:.8rem}
 </style></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
-<div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
+<div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="companies">Mis empresas</button><button class="tab" data-tab="settings">Ajustes</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel hidden" id="mjEntryPanel" aria-hidden="true"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span><button type="button" id="mjCloseEntry" aria-label="Cerrar registro de horas">Cerrar ✕</button></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="vacationsView" class="hidden"><div class="panel"><h2>Vacaciones</h2><p class="muted">Marca los días de vacaciones desde el calendario. Cuenta fechas registradas, no calcula festivos ni convenios.</p><label class="field">Año<select id="vacYear"></select></label><p class="notice" id="vacCounter"></p><label class="field">Cupo anual (días, opcional)<input type="number" id="vacAllowance" min="0" max="366"></label><p><button type="button" id="vacSave" class="primary">Guardar cupo</button></p><div id="vacDays"></div></div></section>
-<section id="settingsView" class="hidden"><div class="panel"><h2>Hojas de servicio</h2>
-<p class="muted">Una hoja por trabajo o empresa. Cada hoja tiene su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
-<p class="notice" id="serviceCurrent"></p><div class="service-list" id="serviceList"></div>
-<form id="serviceForm"><h3>Abrir nueva hoja de servicio</h3>
+<section id="companiesView" class="hidden"><div class="panel"><h2>Mis empresas</h2>
+<p class="muted">Una hoja por trabajo o empresa. Cada una conserva un color aleatorio distinto, además de su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
+<p class="notice" id="serviceCurrent" role="status"></p><div class="service-list mj-company-tabs" id="serviceList" role="tablist" aria-label="Cambiar entre empresas"></div><h3>Papelera de hojas de servicio (30 días)</h3><div class="service-list" id="serviceTrashList"></div>
+<div class="actions"><button type="button" class="primary" id="serviceOpenCalendar">Ver calendario de esta empresa</button><button type="button" class="secondary" id="serviceShowForm" aria-expanded="false" aria-controls="serviceForm">+ Nueva empresa</button><button type="button" class="secondary" id="serviceRename" aria-expanded="false" aria-controls="serviceRenameForm">Cambiar nombre</button></div>
+<form id="serviceRenameForm" hidden><label class="field">Nombre de la empresa seleccionada<input id="serviceRenameName" maxlength="80" required></label><div class="actions"><button type="submit" class="primary">Guardar nombre</button></div></form>
+<form id="serviceForm" hidden><h3>Abrir nueva hoja de servicio</h3>
 <div class="fields"><label class="field full">Nombre de la empresa o trabajo<input id="serviceName" maxlength="80" required placeholder="Ej.: Empresa nueva"></label>
 <label class="field">Primer día en la empresa<input id="serviceStart" type="date" required></label>
 <label class="field">Primera semana de turno<select id="serviceShift"><option value="morning">Mañana (06–14)</option><option value="afternoon">Tarde (14–22)</option></select></label></div>
 <p class="muted">La nueva hoja empezará sin registros. La anterior se guardará como historial. Los turnos seguirán inicialmente el patrón de tres semanas de mañana y una de tarde.</p>
 <button class="primary" type="submit">Crear nueva hoja</button></form>
-<p class="muted" role="status" id="serviceStatus"></p></div><div class="panel"><h2>Ajustes</h2><p class="notice" id="settingsAuto"></p><button type="button" id="settingsToggle" class="secondary">Cambiar registro automático</button><p class="muted">El registro automático se pone al día cuando abres la app; no es un fichaje real en segundo plano.</p><div class="fields"><label class="field">Descanso predeterminado (min)<input id="settingsBreak" type="number" min="0" max="480"></label><label class="field">Tiempo que se debe por jornada (min)<input id="settingsOwed" type="number" min="0" max="480"></label></div><p><button type="button" id="settingsSave" class="primary">Guardar ajustes</button></p><p class="muted" id="settingsNotice"></p><p class="muted">Turnos 06–14 y 14–22. Rotación 3 semanas de mañana y 1 de tarde. Los ajustes no modifican jornadas ya registradas.</p></div></section>
+<p class="muted" role="status" id="serviceStatus"></p></div></section><section id="settingsView" class="hidden"><div class="panel"><h2>Ajustes</h2><p class="notice" id="settingsAuto"></p><button type="button" id="settingsToggle" class="secondary">Cambiar registro automático</button><p class="muted">El registro automático se pone al día cuando abres la app; no es un fichaje real en segundo plano.</p><div class="fields"><label class="field">Descanso predeterminado (min)<input id="settingsBreak" type="number" min="0" max="480"></label><label class="field">Tiempo que se debe por jornada (min)<input id="settingsOwed" type="number" min="0" max="480"></label></div><p><button type="button" id="settingsSave" class="primary">Guardar ajustes</button></p><p class="muted" id="settingsNotice"></p><p class="muted">Turnos 06–14 y 14–22. Rotación 3 semanas de mañana y 1 de tarde. Los ajustes no modifican jornadas ya registradas.</p></div></section>
 <section id="cloudView" class="hidden">
   <div class="panel">
     <h2 style="margin-top:0;font-size:1.15rem">Mis jornadas en la nube</h2>
@@ -114,7 +120,7 @@
   function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));persistSheets();scheduleCloudSave();}
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function newLegacyState(){
-    return {activeId:"initial",items:[{id:"initial",name:"Mi primera hoja de servicio",startDate:"2026-10-19",
+    return {activeId:"initial",deleted:[],items:[{id:"initial",name:"Mi primera hoja de servicio",startDate:"2026-10-19",
       anchor:"2026-10-19",pattern:["morning","afternoon","morning","morning"],closedAt:null,
       data:clone(data),automatico:clone(config),trash:clone(trash),suppressed:clone(suppressed),
       vacationSettings:clone(vacationSettings),androidSettings:clone(settings)}]};
@@ -129,6 +135,42 @@
   let sheetsState=null;
   try{const stored=JSON.parse(localStorage.getItem(SHEETS_KEY)||"null");if(validSheets(stored))sheetsState=stored;}catch(_){}
   if(!sheetsState)sheetsState=newLegacyState();
+  if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
+  // Colores vivos, con suficiente contraste para texto blanco.
+  const SERVICE_COLORS=[
+    "#1D4ED8","#0F766E","#6D28D9","#B91C1C","#0369A1","#A21CAF",
+    "#047857","#B45309","#4338CA","#9D174D","#155E75","#7E22CE",
+    "#166534","#9A3412","#1E40AF","#7F1D1D","#115E59","#701A75"
+  ];
+  function pickServiceColor(){
+    const taken=new Set(sheetsState.items.map(item=>item.tabColor).filter(Boolean));
+    const available=SERVICE_COLORS.filter(color=>!taken.has(color));
+    const colors=available.length?available:SERVICE_COLORS;
+    return colors[Math.floor(Math.random()*colors.length)];
+  }
+  function ensureServiceColors(){
+    let changed=false;
+    // Este campo es visual: nunca modifica jornadas, horas ni balances.
+    for(const item of sheetsState.items){
+      if(typeof item.tabColor!=="string"||!/^#[0-9A-Fa-f]{6}$/.test(item.tabColor)){
+        item.tabColor=pickServiceColor();changed=true;
+      }
+    }
+    if(changed)localStorage.setItem(SHEETS_KEY,JSON.stringify(sheetsState));
+  }
+  ensureServiceColors();
+  // Una hoja eliminada conserva sus registros completos durante 30 días.
+  function cleanServiceTrash(){
+    if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
+    const cutoff=Date.now()-2592000000;
+    const remaining=sheetsState.deleted.filter(item=>item&&item.sheet&&typeof item.sheet.id==="string"&&
+      Number.isFinite(Date.parse(item.deletedAt))&&Date.parse(item.deletedAt)>=cutoff);
+    if(remaining.length!==sheetsState.deleted.length){
+      sheetsState.deleted=remaining;
+      localStorage.setItem(SHEETS_KEY,JSON.stringify(sheetsState));
+    }
+  }
+  cleanServiceTrash();
   function activeSheet(){return sheetsState.items.find(i=>i.id===sheetsState.activeId);}
   function persistSheets(){
     const item=activeSheet();if(!item)return;
@@ -149,6 +191,31 @@
     selected=next.closedAt||today();hideEntryPanel();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();renderServices();renderServices();
     scheduleCloudSave();
+  }
+  function deleteServiceSheet(id){
+    persistSheets();cleanServiceTrash();
+    const index=sheetsState.items.findIndex(item=>item.id===id);
+    if(index===-1)throw Error("No se ha encontrado la hoja.");
+    if(sheetsState.items.length===1)throw Error("No se puede eliminar la única hoja. Crea otra primero.");
+    const removed=sheetsState.items.splice(index,1)[0];
+    sheetsState.deleted.push({sheet:clone(removed),deletedAt:new Date().toISOString()});
+    if(sheetsState.activeId===id){
+      activateSheet(sheetsState.items[0].id);
+    }else{
+      persistSheets();renderServices();scheduleCloudSave();
+    }
+    return {id:removed.id,name:removed.name,records:Object.keys(removed.data||{}).length};
+  }
+  function restoreServiceSheet(id){
+    cleanServiceTrash();
+    const index=sheetsState.deleted.findIndex(item=>item.sheet.id===id);
+    if(index===-1)throw Error("La hoja no está en la papelera o ya ha caducado.");
+    if(sheetsState.items.length>=200)throw Error("Se ha alcanzado el límite de hojas.");
+    if(sheetsState.items.some(item=>item.id===id))throw Error("Ya existe una hoja con ese identificador.");
+    const restored=sheetsState.deleted.splice(index,1)[0].sheet;
+    sheetsState.items.push(clone(restored));
+    persistSheets();renderServices();scheduleCloudSave();
+    return {id:restored.id,name:restored.name};
   }
   persistSheets();
   function weekShift(s) {
@@ -334,8 +401,8 @@
   document.querySelectorAll("button.tab").forEach(b=>b.addEventListener("click",()=>{
     hideEntryPanel();
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));
-    ["calendar","summary","backup","cloud","vacations","settings"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
-    if(b.dataset.tab==="summary")renderSummary();if(b.dataset.tab==="vacations")renderVacations();if(b.dataset.tab==="settings")renderSettings();
+    ["calendar","summary","backup","cloud","vacations","companies","settings"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
+    if(b.dataset.tab==="summary")renderSummary();if(b.dataset.tab==="vacations")renderVacations();if(b.dataset.tab==="settings")renderSettings();if(b.dataset.tab==="companies")renderServices();
   }));
   $("exportBtn").onclick=()=>{
     const json=JSON.stringify({app:"Mi Jornada",version:6,exportedAt:new Date().toISOString(),data,automatico:config,trash,suppressed,vacationSettings,androidSettings:settings,serviceSheets:(persistSheets(),clone(sheetsState))},null,2);
@@ -567,23 +634,110 @@
 
 
   function renderServices(){
+    ensureServiceColors();
     const list=$("serviceList");list.replaceChildren();
     const active=activeSheet();
-    $("serviceCurrent").textContent="Hoja activa: "+active.name+(active.closedAt?" · finalizada "+fmt(active.closedAt):"");
+    $("serviceCurrent").textContent="Empresa activa: "+active.name+" · desde "+fmt(active.startDate)+(active.closedAt?" · finalizada "+fmt(active.closedAt):"");
+    $("serviceCurrent").style.borderLeft="5px solid "+active.tabColor;
     if(!$("serviceStart").value)$("serviceStart").value=today();
-    for(const item of sheetsState.items){
+    sheetsState.items.forEach((item,index)=>{
+      const entryRow=document.createElement("div");
+      entryRow.className="service-entry";
       const button=document.createElement("button");
-      button.type="button";button.className=item.id===active.id?"active":"";
-      button.textContent=(item.id===active.id?"✓ ":"")+item.name+" · desde "+fmt(item.startDate)+(item.closedAt?" · hasta "+fmt(item.closedAt):"");
+      const isActive=item.id===active.id;
+      button.type="button";
+      button.className="service-open"+(isActive?" active":"");
+      button.style.backgroundColor=item.tabColor;
+      button.style.borderColor=item.tabColor;
+      button.style.color="#fff";
+      button.setAttribute("role","tab");
+      button.setAttribute("aria-selected",String(isActive));
+      button.id="mj-company-tab-"+index;
+      button.setAttribute("aria-label",item.name+(item.closedAt?", empresa anterior":"")+(isActive?", activa":""));
+      button.title=item.name+" · desde "+fmt(item.startDate)+(item.closedAt?" · hasta "+fmt(item.closedAt):"");
+      button.textContent=(isActive?"✓ ":"")+item.name+(item.closedAt?" · anterior":"");
       button.onclick=()=>{
-        if(item.id===active.id)return;
-        if(!confirm("¿Cambiar a «"+item.name+"»? Tus registros actuales quedarán guardados en su hoja."))return;
+        if(item.id===activeSheet().id)return;
+        // Guardar la hoja anterior y activar la elegida, sin borrar jornadas.
         activateSheet(item.id);
-        $("serviceStatus").textContent="Hoja abierta: "+item.name+".";
+        $("serviceStatus").textContent="Ahora estás viendo "+item.name+".";
       };
-      list.append(button);
+      button.addEventListener("keydown",ev=>{
+        if(ev.key!=="ArrowRight"&&ev.key!=="ArrowLeft")return;
+        ev.preventDefault();
+        const tabs=[...list.querySelectorAll('[role="tab"]')];
+        const next=tabs[(index+(ev.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length];
+        if(next){next.focus();next.click();}
+      });
+      const deleteButton=document.createElement("button");
+      deleteButton.type="button";deleteButton.className="service-delete";
+      deleteButton.textContent="Enviar a papelera";
+      deleteButton.setAttribute("aria-label","Enviar a papelera la hoja de servicio de "+item.name);
+      deleteButton.disabled=sheetsState.items.length===1;
+      if(deleteButton.disabled)deleteButton.title="No puedes borrar la única hoja. Crea otra primero.";
+      deleteButton.onclick=()=>{
+        const records=Object.keys(item.data||{}).length;
+        if(!confirm("¿Enviar a la papelera la hoja de «"+item.name+"» y sus "+records+
+          " registros? Podrás restaurarla durante 30 días. La operación no afecta a otras hojas."))return;
+        try{
+          const deleted=deleteServiceSheet(item.id);
+          $("serviceStatus").textContent="Hoja «"+deleted.name+"» enviada a la papelera. Puedes recuperarla durante 30 días.";
+        }catch(error){$("serviceStatus").textContent=error.message;}
+      };
+      entryRow.append(button,deleteButton);
+      list.append(entryRow);
+    });
+    cleanServiceTrash();
+    const trashList=$("serviceTrashList");
+    trashList.replaceChildren();
+    if(!sheetsState.deleted.length){
+      const empty=document.createElement("p");
+      empty.className="muted";empty.textContent="No hay hojas eliminadas.";
+      trashList.append(empty);
     }
+    for(const removed of sheetsState.deleted){
+      const button=document.createElement("button");
+      button.type="button";
+      button.textContent="Restaurar «"+removed.sheet.name+"» · eliminada "+fmt(removed.deletedAt.slice(0,10));
+      button.onclick=()=>{
+        if(!confirm("¿Restaurar la hoja «"+removed.sheet.name+"» con todos sus registros?"))return;
+        try{
+          restoreServiceSheet(removed.sheet.id);
+          $("serviceStatus").textContent="Hoja «"+removed.sheet.name+"» restaurada.";
+        }catch(error){$("serviceStatus").textContent=error.message;}
+      };
+      trashList.append(button);
+    }
+    const activeIndex=sheetsState.items.findIndex(i=>i.id===active.id);
+    $("serviceCurrent").setAttribute("role","tabpanel");
+    $("serviceCurrent").setAttribute("aria-labelledby","mj-company-tab-"+activeIndex);
   }
+  $("serviceShowForm").onclick=()=>{
+    const form=$("serviceForm"),expanded=form.hidden;
+    form.hidden=!expanded;
+    $("serviceShowForm").setAttribute("aria-expanded",String(expanded));
+    $("serviceShowForm").textContent=expanded?"Cancelar nueva empresa":"+ Nueva empresa";
+    if(expanded)$("serviceName").focus();
+  };
+  $("serviceRename").onclick=()=>{
+    const form=$("serviceRenameForm"),expanded=form.hidden;
+    form.hidden=!expanded;
+    $("serviceRename").setAttribute("aria-expanded",String(expanded));
+    if(expanded){$("serviceRenameName").value=activeSheet().name;$("serviceRenameName").focus();}
+  };
+  $("serviceRenameForm").onsubmit=event=>{
+    event.preventDefault();
+    const name=$("serviceRenameName").value.trim();
+    if(!name||name.length>80){$("serviceStatus").textContent="Introduce un nombre válido (máximo 80 caracteres).";return;}
+    activeSheet().name=name;persistSheets();renderServices();scheduleCloudSave();
+    $("serviceRenameForm").hidden=true;$("serviceRename").setAttribute("aria-expanded","false");
+    $("serviceStatus").textContent="Empresa renombrada a «"+name+"» sin modificar sus jornadas.";
+  };
+  $("serviceOpenCalendar").onclick=()=>{
+    const nav=document.querySelector('.mj-bottom-btn[data-mj-go="calendar"]');
+    if(nav)nav.click();
+    else {const tab=document.querySelector('button.tab[data-tab="calendar"]');if(tab)tab.click();}
+  };
   $("serviceForm").onsubmit=event=>{
     event.preventDefault();
     const name=$("serviceName").value.trim(),start=$("serviceStart").value,shift=$("serviceShift").value;
@@ -597,7 +751,7 @@
     const current=activeSheet(),end=parse(start);end.setDate(end.getDate()-1);
     if(!current.closedAt)current.closedAt=iso(end);
     const id="job-"+Date.now()+"-"+String(sheetsState.items.length+1);
-    sheetsState.items.push({id,name,startDate:start,anchor:start,pattern:shift==="afternoon"?["afternoon","morning","morning","morning"]:["morning","morning","morning","afternoon"],
+    sheetsState.items.push({id,name,tabColor:pickServiceColor(),startDate:start,anchor:start,pattern:shift==="afternoon"?["afternoon","morning","morning","morning"]:["morning","morning","morning","afternoon"],
       closedAt:null,data:{},automatico:{enabled:true,since:start},trash:{},suppressed:{},vacationSettings:{},androidSettings:{breakMins:settings.breakMins,owedMins:settings.owedMins}});
     sheetsState.activeId=id;
     data={};config={enabled:true,since:start};trash={};suppressed={};vacationSettings={};
@@ -605,7 +759,8 @@
     selected=start;viewDate=parse(start);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();renderSettings();
     scheduleCloudSave();
-    $("serviceName").value="";$("serviceStatus").textContent="Nueva hoja «"+name+"» creada. Tu trabajo anterior sigue en el historial.";
+    $("serviceName").value="";$("serviceRenameForm").hidden=true;$("serviceRename").setAttribute("aria-expanded","false");$("serviceForm").hidden=true;$("serviceShowForm").setAttribute("aria-expanded","false");$("serviceShowForm").textContent="+ Nueva empresa";
+    $("serviceStatus").textContent="Nueva hoja «"+name+"» creada. Tu trabajo anterior sigue en el historial.";
   };
 
   function renderVacations(){
@@ -684,6 +839,21 @@ window.miJornadaBridge = {
     saveMeta(); save();
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
   },
+  services: function(){
+    return clone(sheetsState.items.map(item=>({
+      id:item.id,name:item.name,startDate:item.startDate,closedAt:item.closedAt,
+      records:Object.keys(item.data||{}).length,active:item.id===sheetsState.activeId
+    })));
+  },
+  deletedServices: function(){
+    cleanServiceTrash();
+    return clone(sheetsState.deleted.map(item=>({
+      id:item.sheet.id,name:item.sheet.name,deletedAt:item.deletedAt,
+      records:Object.keys(item.sheet.data||{}).length
+    })));
+  },
+  deleteService: function(id){return deleteServiceSheet(id);},
+  restoreService: function(id){return restoreServiceSheet(id);},
   redraw: function () {
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
   }
@@ -723,4 +893,4 @@ window.addEventListener("mi-jornada:open-tool", function (event) {
   });
   apply();
 })();
-</script></body></html>
+</script><script defer src="./mi-jornada-documents.js?v=1"></script></body></html>
