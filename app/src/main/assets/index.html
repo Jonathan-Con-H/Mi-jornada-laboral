@@ -6,6 +6,7 @@
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 .day.vacation{background:#eaf2ff;border:2px solid #2563eb}.day.sick,.day.paid_leave,.day.justified{background:#fff4e0;border:2px solid #d97706}.day.suppressed{opacity:.6}.trash-entry{padding:10px 0;border-top:1px solid #eee;display:flex;justify-content:space-between}
 .service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}
+.service-list .service-open.active{outline:3px solid #f5d869;outline-offset:-3px;box-shadow:inset 0 0 0 2px #fff9}
 .service-list .service-entry{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
 .service-list .service-entry .service-open{flex:1;min-width:180px}
 .service-list .service-entry .service-delete{width:auto;flex:0 0 auto;text-align:center;background:#fde9e7;color:#9a3028;border:1px solid #d79892}
@@ -26,7 +27,7 @@
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="vacationsView" class="hidden"><div class="panel"><h2>Vacaciones</h2><p class="muted">Marca los días de vacaciones desde el calendario. Cuenta fechas registradas, no calcula festivos ni convenios.</p><label class="field">Año<select id="vacYear"></select></label><p class="notice" id="vacCounter"></p><label class="field">Cupo anual (días, opcional)<input type="number" id="vacAllowance" min="0" max="366"></label><p><button type="button" id="vacSave" class="primary">Guardar cupo</button></p><div id="vacDays"></div></div></section>
 <section id="settingsView" class="hidden"><div class="panel"><h2>Hojas de servicio</h2>
-<p class="muted">Una hoja por trabajo o empresa. Cada hoja tiene su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
+<p class="muted">Una hoja por trabajo o empresa. Cada una tiene un color aleatorio que se conserva, además de su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
 <p class="notice" id="serviceCurrent"></p><div class="service-list" id="serviceList"></div>
 <h3>Papelera de hojas de servicio (30 días)</h3><div class="service-list" id="serviceTrashList"></div>
 <form id="serviceForm"><h3>Abrir nueva hoja de servicio</h3>
@@ -136,6 +137,29 @@
   try{const stored=JSON.parse(localStorage.getItem(SHEETS_KEY)||"null");if(validSheets(stored))sheetsState=stored;}catch(_){}
   if(!sheetsState)sheetsState=newLegacyState();
   if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
+  // Colores vivos, con suficiente contraste para texto blanco.
+  const SERVICE_COLORS=[
+    "#1D4ED8","#0F766E","#6D28D9","#B91C1C","#0369A1","#A21CAF",
+    "#047857","#B45309","#4338CA","#9D174D","#155E75","#7E22CE",
+    "#166534","#9A3412","#1E40AF","#7F1D1D","#115E59","#701A75"
+  ];
+  function pickServiceColor(){
+    const taken=new Set(sheetsState.items.map(item=>item.tabColor).filter(Boolean));
+    const available=SERVICE_COLORS.filter(color=>!taken.has(color));
+    const colors=available.length?available:SERVICE_COLORS;
+    return colors[Math.floor(Math.random()*colors.length)];
+  }
+  function ensureServiceColors(){
+    let changed=false;
+    // Este campo es visual: nunca modifica jornadas, horas ni balances.
+    for(const item of sheetsState.items){
+      if(typeof item.tabColor!=="string"||!/^#[0-9A-Fa-f]{6}$/.test(item.tabColor)){
+        item.tabColor=pickServiceColor();changed=true;
+      }
+    }
+    if(changed)localStorage.setItem(SHEETS_KEY,JSON.stringify(sheetsState));
+  }
+  ensureServiceColors();
   // Una hoja eliminada conserva sus registros completos durante 30 días.
   function cleanServiceTrash(){
     if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
@@ -611,9 +635,11 @@
 
 
   function renderServices(){
+    ensureServiceColors();
     const list=$("serviceList");list.replaceChildren();
     const active=activeSheet();
     $("serviceCurrent").textContent="Hoja activa: "+active.name+(active.closedAt?" · finalizada "+fmt(active.closedAt):"");
+    $("serviceCurrent").style.borderLeft="5px solid "+active.tabColor;
     if(!$("serviceStart").value)$("serviceStart").value=today();
     for(const item of sheetsState.items){
       const entryRow=document.createElement("div");
@@ -621,6 +647,9 @@
       const button=document.createElement("button");
       button.type="button";
       button.className="service-open"+(item.id===active.id?" active":"");
+      button.style.backgroundColor=item.tabColor;
+      button.style.borderColor=item.tabColor;
+      button.style.color="#fff";
       button.textContent=(item.id===active.id?"✓ ":"")+item.name+" · desde "+fmt(item.startDate)+(item.closedAt?" · hasta "+fmt(item.closedAt):"");
       button.onclick=()=>{
         if(item.id===active.id)return;
@@ -681,7 +710,7 @@
     const current=activeSheet(),end=parse(start);end.setDate(end.getDate()-1);
     if(!current.closedAt)current.closedAt=iso(end);
     const id="job-"+Date.now()+"-"+String(sheetsState.items.length+1);
-    sheetsState.items.push({id,name,startDate:start,anchor:start,pattern:shift==="afternoon"?["afternoon","morning","morning","morning"]:["morning","morning","morning","afternoon"],
+    sheetsState.items.push({id,name,tabColor:pickServiceColor(),startDate:start,anchor:start,pattern:shift==="afternoon"?["afternoon","morning","morning","morning"]:["morning","morning","morning","afternoon"],
       closedAt:null,data:{},automatico:{enabled:true,since:start},trash:{},suppressed:{},vacationSettings:{},androidSettings:{breakMins:settings.breakMins,owedMins:settings.owedMins}});
     sheetsState.activeId=id;
     data={};config={enabled:true,since:start};trash={};suppressed={};vacationSettings={};
