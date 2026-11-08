@@ -37,8 +37,8 @@ test("Android guarda PDF/fotos de forma privada sin cambiar jornadas ni subir bi
   assert.match(activity, /documentStore\.handleResult/);
   assert.match(manifest, /androidx\.core\.content\.FileProvider/);
   assert.match(read("app/src/main/res/xml/documents_paths.xml"), /files-path/);
-  const code=gradle.match(/versionCode\\s+(\\d+)/);
+  const code=gradle.match(/versionCode\s+(\d+)/);
   assert.ok(code,"La APK debe declarar su número de versión");
   assert.ok(Number(code[1])>=12,"No se debe reducir la versión Android");
-  assert.match(gradle,/versionName '2[.]\\d+'/);
+  assert.match(gradle,/versionName '2[.]\d+'/);
 });
