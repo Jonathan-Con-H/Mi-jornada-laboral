@@ -139,3 +139,16 @@ main.wrap{padding:14px 8px 98px}
 .mj-metric.owed-balance .mj-metric-label small{display:block;font-size:.67rem;line-height:1.45;color:#a5bfd0;font-weight:400;margin-top:2px}
 .mj-metric.owed-balance strong{font-size:1.2rem}
 @media(max-width:570px){.mj-month-caption{margin-left:30px}.mj-metric.owed-balance{padding:12px 8px}}
+
+/* Vacaciones y ausencias: fondos neutros y bordes claramente diferenciados. */
+.day.absence.vacation{border-color:#1D4ED8}
+.day.absence.sick{border-color:#dc2626}
+.day.absence.paid_leave{border-color:#0d9488}
+.day.absence.justified{border-color:#d97706}
+.day .absence-symbol{display:flex;position:absolute;bottom:5px;right:5px;color:#334155}
+.day .absence-symbol .mj-icon{width:17px;height:17px}
+#summaryView,#backupView,#vacationView{max-width:980px;margin:auto}
+#vacationView .panel{background:#0d2436}
+.legend span:nth-child(5) .dot{color:#e44b51}
+.legend span:nth-child(6) .dot{color:#1D4ED8}
+.legend span:nth-child(7) .dot{color:#d97706}
