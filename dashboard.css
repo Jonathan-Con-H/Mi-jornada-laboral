@@ -180,7 +180,7 @@ main.wrap{padding:14px 8px 98px}
 #companiesView .actions{justify-content:flex-start;margin:14px 0;flex-wrap:wrap}
 #companiesView .field{background:#102e43;border-radius:12px;padding:12px}
 #companiesView #serviceForm{border-top:1px solid #34536a;margin-top:14px;padding-top:14px}
-#companiesView #serviceForm[hidden]{display:none!important}
+#companiesView #serviceForm[hidden],#companiesView #serviceRenameForm[hidden]{display:none!important}
 #companiesView #serviceCurrent{margin-top:12px}
 @media(max-width:570px){
   .mj-bottom-btn{font-size:.63rem;padding:7px 1px;letter-spacing:-.1px}
