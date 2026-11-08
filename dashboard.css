@@ -186,3 +186,16 @@ main.wrap{padding:14px 8px 98px}
   .mj-bottom-btn{font-size:.63rem;padding:7px 1px;letter-spacing:-.1px}
   #companiesView .mj-company-tabs button{font-size:.85rem;padding:11px 14px}
 }
+
+
+/* Casillas del calendario más anchas: conserva colores, bordes y estados existentes. */
+#calendar{width:100%;min-width:0;overscroll-behavior-x:contain}
+@media(max-width:1180px){
+  #calendar{grid-template-columns:repeat(7,minmax(84px,1fr));overflow-x:auto;scrollbar-width:thin}
+}
+@media(max-width:850px){
+  #calendar{grid-template-columns:repeat(7,minmax(68px,1fr))}
+}
+@media(max-width:570px){
+  #calendar{grid-template-columns:repeat(7,minmax(62px,1fr));gap:3px}
+}
