@@ -1,0 +1,31 @@
+name: Utilidades Android para firma local (sin credenciales)
+on:
+  push:
+    branches:
+      - feat/gemini-papelera-hojas-servicio
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  herramientas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preparar Android build-tools (solo herramientas públicas)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          test -s "$SDK_TOOLS/lib/apksigner.jar"
+          test -x "$SDK_TOOLS/zipalign"
+          mkdir -p "$RUNNER_TEMP/android-sign-tools"
+          cp "$SDK_TOOLS/lib/apksigner.jar" "$RUNNER_TEMP/android-sign-tools/apksigner.jar"
+          cp "$SDK_TOOLS/zipalign" "$RUNNER_TEMP/android-sign-tools/zipalign"
+      - name: Publicar herramientas temporales (sin claves)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-build-tools-35-sin-claves
+          path: ${{ runner.temp }}/android-sign-tools/
+          if-no-files-found: error
+          retention-days: 1

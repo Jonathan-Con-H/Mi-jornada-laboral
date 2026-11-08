@@ -79,8 +79,9 @@ test("crear nueva hoja conserva la empresa anterior y permite volver",()=>{
   assert.equal(sheets.items[0].data[h.oldDay].notes,h.original.notes);
   assert.equal(Object.keys(sheets.items[1].data).length,0);
   assert.equal(sheets.items[0].closedAt,"2027-01-10");
-  const oldButton=h.element("serviceList").children.find(x=>x.textContent.includes("Mi primera hoja"));
-  assert.ok(oldButton);
+  const oldRow=h.element("serviceList").children.find(row=>row.children.some(btn=>btn.textContent.includes("Mi primera hoja")));
+  assert.ok(oldRow);
+  const oldButton=oldRow.children.find(btn=>btn.textContent.includes("Mi primera hoja"));
   oldButton.onclick();
   assert.equal(JSON.parse(h.storage.get("miJornada.v1"))[h.oldDay].notes,h.original.notes);
 });
@@ -101,4 +102,50 @@ test("exportación Android incluye todas las hojas de servicio y no elimina dato
   assert.equal(payload.serviceSheets.items[0].data[h.oldDay].notes,h.original.notes);
   h.window.miJornadaOnBackup(JSON.stringify({ok:true,message:"Copia guardada"}));
   assert.equal(h.element("backupStatus").textContent,"Copia guardada");
+});
+
+test("hojas existentes y nuevas conservan colores diferentes",()=>{
+  const h=harness();
+  h.element("serviceName").value="Segunda empresa";
+  h.element("serviceStart").value="2027-01-11";
+  h.element("serviceShift").value="morning";
+  h.element("serviceForm").onsubmit({preventDefault(){}});
+  const sheets=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.match(sheets.items[0].tabColor,/^#[0-9A-Fa-f]{6}$/);
+  assert.match(sheets.items[1].tabColor,/^#[0-9A-Fa-f]{6}$/);
+  assert.notEqual(sheets.items[0].tabColor,sheets.items[1].tabColor);
+  const colors=sheets.items.map(s=>s.tabColor);
+  h.element("serviceList").children[0].children[0].onclick();
+  const after=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.deepEqual(after.items.map(s=>s.tabColor),colors);
+});
+
+test("borrado manual conserva toda la hoja en la papelera y permite restaurar",()=>{
+  const h=harness();
+  h.element("serviceName").value="Segunda empresa";
+  h.element("serviceStart").value="2027-01-11";
+  h.element("serviceShift").value="morning";
+  h.element("serviceForm").onsubmit({preventDefault(){}});
+  const previous=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  const first=h.element("serviceList").children[0];
+  assert.equal(first.children[1].textContent,"Enviar a papelera");
+  first.children[1].onclick();
+  const removed=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(removed.items.length,1);
+  assert.equal(removed.deleted.length,1);
+  assert.equal(removed.deleted[0].sheet.data[h.oldDay].notes,h.original.notes);
+  assert.equal(removed.deleted[0].sheet.tabColor,previous.items[0].tabColor);
+  h.element("serviceTrashList").children[0].onclick();
+  const restored=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(restored.items.length,2);
+  assert.equal(restored.deleted.length,0);
+  const recovered=restored.items.find(s=>s.id==="initial");
+  assert.equal(recovered.data[h.oldDay].notes,h.original.notes);
+  assert.equal(recovered.tabColor,previous.items[0].tabColor);
+});
+
+test("no permite borrar la última hoja de servicio",()=>{
+  const h=harness();
+  const row=h.element("serviceList").children[0];
+  assert.equal(row.children[1].disabled,true);
 });
