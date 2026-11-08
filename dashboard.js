@@ -267,7 +267,7 @@
     }
     const tabPage = page === 'summary' ? 'summary' :
       page === 'backup' ? 'backup' : page === 'vacations' ? (document.getElementById('vacationsView') ? 'vacations' : 'vacation') :
-      page === 'services' ? 'settings' : page === 'settings' ? 'settings' : page === 'documents' ? 'documents' : 'calendar';
+      page === 'services' ? 'settings' : page === 'documents' ? 'documents' : page === 'settings' ? 'settings' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
