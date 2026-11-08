@@ -33,29 +33,25 @@ requiere elegir y confirmar la sustitución de los registros.
 ### Firma estable para las próximas actualizaciones
 
 El flujo `Mi Jornada - APK Android firmado` genera un APK de distribución **solo**
-cuando estén configurados estos cuatro *GitHub Actions repository secrets*:
+cuando esté configurado el secreto privado de GitHub Actions llamado
+`MJ_RELEASE_BUNDLE_B64`.
 
-- `MJ_RELEASE_KEYSTORE_B64`: contenido de la clave de firma Java (JKS/PKCS12)
-  codificado en Base64, **nunca pegado en archivos del repositorio**.
-- `MJ_RELEASE_STORE_PASSWORD`: contraseña del almacén de claves.
-- `MJ_RELEASE_KEY_ALIAS`: alias de la clave.
-- `MJ_RELEASE_KEY_PASSWORD`: contraseña de la clave privada.
+Este secreto es un texto Base64 que encapsula un JSON con cuatro campos:
+`keystore_b64` (contenido del archivo de firma Java codificado en Base64),
+`store_password`, `key_alias` y `key_password`.
+**Nunca publiques el texto del secreto, la clave o las contraseñas en GitHub ni
+en una incidencia o captura de pantalla.**
 
-Se configuran en GitHub: **Settings > Secrets and variables > Actions**. No envíes
-contraseñas ni claves privadas por chats, capturas ni incidencias. Guarda una copia
-segura de tu keystore y las contraseñas: perderlas puede impedir actualizar el APK.
+Configúralo en **Settings > Secrets and variables > Actions > New repository
+secret** con el nombre exacto `MJ_RELEASE_BUNDLE_B64`, y conserva una copia
+privada del archivo JKS y las contraseñas fuera del repositorio y del móvil.
+Perderlas puede impedir actualizar la aplicación. La firma de distribución se
+comprueba con `apksigner` y se interrumpe sin publicar nada si falta el secreto.
 
-Para crear una clave por primera vez en un ordenador con Java instalado, por ejemplo:
-
-```bash
-keytool -genkeypair -v -keystore mi-jornada-release.jks -storetype PKCS12 -alias mi-jornada -keyalg RSA -keysize 3072 -validity 10000
-base64 -w 0 mi-jornada-release.jks
-```
-
-*Nota:* en macOS no existe `base64 -w 0` en todas las versiones; se puede usar
-`base64 < mi-jornada-release.jks | tr -d '\\n'`. El valor Base64 se introduce
-solamente en el secreto de GitHub. Las contraseñas y la clave deben generarse
-y conservarse fuera de este repositorio público.
+Para generar tus propios datos de firma, puedes crear un keystore PKCS12 con
+`keytool -genkeypair`, guardar una copia protegida y convertir el contenido del
+keystore y las contraseñas a los cuatro campos del JSON. El texto de ese JSON
+codificado en Base64 es el único secreto que requiere el flujo.
 
 Una vez configurada la firma, abre **Actions > Mi Jornada - APK Android firmado >
 Run workflow**. Si faltan secretos o la clave es incorrecta, la acción falla sin
