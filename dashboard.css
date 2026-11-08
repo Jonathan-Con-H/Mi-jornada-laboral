@@ -152,3 +152,10 @@ main.wrap{padding:14px 8px 98px}
 .legend span:nth-child(5) .dot{color:#e44b51}
 .legend span:nth-child(6) .dot{color:#1D4ED8}
 .legend span:nth-child(7) .dot{color:#d97706}
+
+/* Página de ajustes: secciones separadas sin tocar el calendario. */
+#settingsView{max-width:980px;margin:auto}
+#settingsView .panel{background:#0d2436}
+#settingsView .field{background:#102e43;border-radius:12px;padding:12px}
+#settingsView .field strong{color:#f5f8fc;font-size:1.02rem}
+#settingsView .actions button{min-width:165px}
