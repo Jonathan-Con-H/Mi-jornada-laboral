@@ -109,12 +109,12 @@ main.wrap{width:100%;margin-left:0;padding:17px 13px 105px}
 .day{min-height:88px}
 }
 @media(max-width:570px){
-main.wrap{padding:14px 8px 98px}
+main.wrap{padding:14px 4px 98px}
 #calendarView>.mj-insights{display:flex;flex-direction:column;gap:12px}
 .mj-insight-card{padding:16px}
-.calendar{gap:4px}
+.calendar{gap:2px}
 .dow{font-size:.76rem;padding:7px 0}
-.day{min-height:74px;border-radius:10px;border-width:4px!important;font-size:1.02rem;padding:9px 1px 4px}.day .shift{font-size:.62rem}
+.day{min-height:88px;border-radius:10px;border-width:4px!important;font-size:1.02rem;padding:10px 1px 6px}.day .shift{font-size:.62rem}
 .day.rest{border-width:1px!important}
 .day.empty{border:0!important}
 .monthtitle{font-size:1.17rem;min-width:0}
