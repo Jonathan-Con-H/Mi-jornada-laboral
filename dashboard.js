@@ -203,7 +203,8 @@
       return;
     }
     const tabPage = page === 'summary' ? 'summary' :
-      page === 'backup' ? 'backup' : page === 'vacations' ? 'vacation' : 'calendar';
+      page === 'backup' ? 'backup' : page === 'vacations' ? 'vacation' :
+      page === 'settings' ? 'settings' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
@@ -211,7 +212,7 @@
     });
     const target = page === 'register' ? $mj('entryForm') :
       page === 'notes' ? $mj('notes') :
-      page === 'settings' ? $mj('toggleAuto') :
+      page === 'settings' ? $mj('settingsView') :
       page === 'summary' ? $mj('summaryView') :
       page === 'backup' ? $mj('backupView') :
       page === 'vacations' ? $mj('vacationView') : $mj('calendarView');
