@@ -30,7 +30,7 @@ main.wrap{margin-left:252px;padding:26px 26px 120px;width:calc(100% - 252px)}
 #prevMonth:hover,#nextMonth:hover{background:#1b405f}
 .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:10px}
 .dow{color:#f5faff;font-size:.86rem;font-weight:650;text-align:center;padding:9px 0}
-.day{position:relative;min-width:0;min-height:100px;display:flex;align-items:center;justify-content:flex-start;padding:11px 3px 5px;background:#fdfdff!important;border:4px solid #2e485b;border-radius:13px;color:#10151b!important;font-size:1.35rem;font-weight:750;box-shadow:0 2px 8px #00000012;gap:1px}
+.day{position:relative;min-width:0;min-height:88px;display:flex;align-items:center;justify-content:flex-start;padding:11px 3px 5px;background:#fdfdff!important;border:4px solid #2e485b;border-radius:13px;color:#10151b!important;font-size:1.35rem;font-weight:750;box-shadow:0 2px 8px #00000012;gap:1px}
 .day>span:first-child{color:#14151a}
 .day .shift{display:block;color:#334155;font-size:.77rem;font-weight:800;line-height:1.15;text-transform:none}.day .extra-tag{display:inline-block;font-size:.55rem}
 .day.morning{border:4px solid #38BDF8}
@@ -112,9 +112,9 @@ main.wrap{width:100%;margin-left:0;padding:17px 13px 105px}
 main.wrap{padding:14px 4px 98px}
 #calendarView>.mj-insights{display:flex;flex-direction:column;gap:12px}
 .mj-insight-card{padding:16px}
-.calendar{gap:2px}
+.calendar{gap:1px}
 .dow{font-size:.76rem;padding:7px 0}
-.day{min-height:86px;border-radius:10px;border-width:4px!important;font-size:1.02rem;padding:10px 1px 5px}.day .shift{font-size:.62rem}
+.day{min-height:84px;border-radius:10px;border-width:4px!important;font-size:1rem;padding:8px 1px 2px}.day .shift{font-size:.62rem}
 .day.rest{border-width:1px!important}
 .day.empty{border:0!important}
 .monthtitle{font-size:1.17rem;min-width:0}
