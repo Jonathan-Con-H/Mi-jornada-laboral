@@ -27,12 +27,15 @@
   font-size:1.05rem;
   gap:1px;
 }
+/* Igualar altura de los huecos antes del día 1 a la de las casillas visibles. */
+.calendar .day.empty{height:60px;min-height:60px;max-height:60px}
 .calendar .day.morning,.calendar .day.afternoon,
 .calendar .day.holiday,.calendar .day.vacation{border-width:4px}
 .calendar .day.rest{border-width:1px}
 .calendar .day .shift{font-size:.69rem;white-space:nowrap}
 @media(max-width:570px){
   .calendar .day:not(.empty){width:calc(100% - 4px);height:54px;min-height:54px;max-height:54px}
+  .calendar .day.empty{height:54px;min-height:54px;max-height:54px}
   .calendar .day .shift{font-size:.57rem}
 }
 </style>
