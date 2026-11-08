@@ -96,6 +96,33 @@
   insights.append(todayPanel, monthPanel);
   const calendarView = document.getElementById('calendarView');
   calendarView.insertBefore(insights, calendarView.children[1]);
+  // En Android, el registro automático se controla desde Ajustes sin
+  // duplicar el panel en el calendario. Sus botones originales siguen operativos.
+  const androidSettings = document.getElementById('settingsView');
+  const androidToggle = document.getElementById('toggleAuto');
+  if (androidSettings && androidToggle && calendarView.contains(androidToggle)) {
+    const originalPanel = androidToggle.closest('.panel');
+    if (originalPanel) {
+      originalPanel.classList.add('hidden');
+      androidSettings.appendChild(originalPanel);
+    }
+  }
+  // El menú lateral se oculta en pantallas pequeñas. Las copias y la nube
+  // deben ser accesibles desde Ajustes sin quitar la navegación móvil actual.
+  if (androidSettings && document.getElementById('cloudView')) {
+    const toolsPanel = document.createElement('div');
+    toolsPanel.className = 'panel';
+    toolsPanel.innerHTML = '<h2>Datos y seguridad</h2><p class="muted">Tus registros siguen guardados en el móvil. Protege tus hojas de servicio antes de cambiar de versión o teléfono.</p><div class="actions"><button class="secondary" type="button" data-open-android="backup">Copias de seguridad</button><button class="secondary" type="button" data-open-android="cloud">Mi nube</button></div>';
+    toolsPanel.querySelectorAll('[data-open-android]').forEach(function (button) {
+      button.onclick = function () {
+        const tab = document.querySelector('button.tab[data-tab="' + button.dataset.openAndroid + '"]');
+        if (tab) tab.click();
+        window.scrollTo({top:0,behavior:'smooth'});
+      };
+    });
+    androidSettings.appendChild(toolsPanel);
+  }
+
   const legend = calendarView.querySelector('.legend');
   if (legend) {
     legend.innerHTML =
