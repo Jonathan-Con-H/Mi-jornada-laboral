@@ -15,6 +15,7 @@
     sparkles:"m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3z M19 17l.7 1.3L21 19l-1.3.7L19 21l-.7-1.3L17 19l1.3-.7L19 17z",
     settings:"M12 3v2 M12 19v2 M3 12h2 M19 12h2 M5.6 5.6 7 7 M17 17l1.4 1.4 M18.4 5.6 17 7 M7 17l-1.4 1.4 M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8",
     cloud:"M6 18h13a4 4 0 0 0 0-8h-1a6 6 0 0 0-11.6-1.4A5 5 0 0 0 6 18z",
+    menu:"M4 6h16 M4 12h16 M4 18h16",
     check:"M20 6 9 17l-5-5",
     cup:"M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8 M16 9h2a3 3 0 0 1 0 6h-2 M4 22h15 M8 3v2 M12 3v2",
     plus:"M12 4v16 M4 12h16",
@@ -38,8 +39,9 @@
   sidebar.className = 'mj-sidebar';
   sidebar.setAttribute('aria-label', 'Menú principal');
   sidebar.innerHTML =
-    '<div class="mj-brand">' + glyph('calendar') + '<span>Mi Jornada</span></div>' +
-    '<nav class="mj-sidebar-menu" aria-label="Secciones">' +
+    '<div class="mj-brand">' + glyph('calendar') + '<span>Mi Jornada</span>' +
+    '<button type="button" class="mj-menu-toggle" aria-controls="mjMainMenu" aria-expanded="false" aria-label="Abrir menú de secciones">' + glyph('menu') + '</button></div>' +
+    '<nav id="mjMainMenu" class="mj-sidebar-menu" aria-label="Secciones">' +
     navButton('calendar','calendar','Calendario') +
     navButton('register','clock','Registro jornada') +
     navButton('summary','chart','Resumen') +
@@ -53,6 +55,24 @@
     '</nav><div class="mj-sidebar-foot">' + glyph('cloud') +
     '<span>Datos guardados en este dispositivo</span></div>';
   document.body.insertBefore(sidebar, main);
+  const menuToggle = sidebar.querySelector('.mj-menu-toggle');
+  function setMenuOpen(open) {
+    sidebar.classList.toggle('is-open', open);
+    menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.setAttribute('aria-label', open ? 'Cerrar menú de secciones' : 'Abrir menú de secciones');
+  }
+  menuToggle.addEventListener('click', function () {
+    setMenuOpen(!sidebar.classList.contains('is-open'));
+  });
+  document.addEventListener('click', function (event) {
+    if (sidebar.classList.contains('is-open') && !sidebar.contains(event.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && sidebar.classList.contains('is-open')) {
+      setMenuOpen(false);
+      menuToggle.focus();
+    }
+  });
   const bottom = document.createElement('nav');
   bottom.className = 'mj-bottom-nav';
   bottom.setAttribute('aria-label', 'Navegación rápida');
@@ -226,6 +246,7 @@
     updateInsights();
   };
   function choose(page) {
+    setMenuOpen(false);
     if (page === 'cloud' || page === 'ai') {
       window.dispatchEvent(new CustomEvent('mi-jornada:open-tool',{detail:{page:page}}));
       return;
