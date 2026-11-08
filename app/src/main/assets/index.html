@@ -5,7 +5,12 @@
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 .day.vacation{background:#eaf2ff;border:2px solid #2563eb}.day.sick,.day.paid_leave,.day.justified{background:#fff4e0;border:2px solid #d97706}.day.suppressed{opacity:.6}.trash-entry{padding:10px 0;border-top:1px solid #eee;display:flex;justify-content:space-between}
-.service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
+.service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}
+.service-list .service-entry{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.service-list .service-entry .service-open{flex:1;min-width:180px}
+.service-list .service-entry .service-delete{width:auto;flex:0 0 auto;text-align:center;background:#fde9e7;color:#9a3028;border:1px solid #d79892}
+.service-list .service-entry .service-delete:disabled{opacity:.5;cursor:not-allowed}
+.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
 </style><link rel="stylesheet" href="./dashboard.css?v=9">
 <style id="mj-view-toggle-css">
 #mjViewToggle{display:block;width:calc(100% - 20px);margin:0 10px 13px;background:#133753;border:1px solid #47728d;color:#fff;padding:10px 8px;border-radius:12px;font:650 .84rem system-ui;cursor:pointer}
@@ -611,8 +616,11 @@
     $("serviceCurrent").textContent="Hoja activa: "+active.name+(active.closedAt?" · finalizada "+fmt(active.closedAt):"");
     if(!$("serviceStart").value)$("serviceStart").value=today();
     for(const item of sheetsState.items){
+      const entryRow=document.createElement("div");
+      entryRow.className="service-entry";
       const button=document.createElement("button");
-      button.type="button";button.className=item.id===active.id?"active":"";
+      button.type="button";
+      button.className="service-open"+(item.id===active.id?" active":"");
       button.textContent=(item.id===active.id?"✓ ":"")+item.name+" · desde "+fmt(item.startDate)+(item.closedAt?" · hasta "+fmt(item.closedAt):"");
       button.onclick=()=>{
         if(item.id===active.id)return;
@@ -620,7 +628,23 @@
         activateSheet(item.id);
         $("serviceStatus").textContent="Hoja abierta: "+item.name+".";
       };
-      list.append(button);
+      const deleteButton=document.createElement("button");
+      deleteButton.type="button";deleteButton.className="service-delete";
+      deleteButton.textContent="Enviar a papelera";
+      deleteButton.setAttribute("aria-label","Enviar a papelera la hoja de servicio de "+item.name);
+      deleteButton.disabled=sheetsState.items.length===1;
+      if(deleteButton.disabled)deleteButton.title="No puedes borrar la única hoja. Crea otra primero.";
+      deleteButton.onclick=()=>{
+        const records=Object.keys(item.data||{}).length;
+        if(!confirm("¿Enviar a la papelera la hoja de «"+item.name+"» y sus "+records+
+          " registros? Podrás restaurarla durante 30 días. La operación no afecta a otras hojas."))return;
+        try{
+          const deleted=deleteServiceSheet(item.id);
+          $("serviceStatus").textContent="Hoja «"+deleted.name+"» enviada a la papelera. Puedes recuperarla durante 30 días.";
+        }catch(error){$("serviceStatus").textContent=error.message;}
+      };
+      entryRow.append(button,deleteButton);
+      list.append(entryRow);
     }
     cleanServiceTrash();
     const trashList=$("serviceTrashList");
