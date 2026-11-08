@@ -82,13 +82,13 @@
   monthPanel.innerHTML =
     '<div class="mj-card-title">' + glyph('chart') + '<span>Resumen del mes</span></div>' +
     '<div class="mj-month-caption" id="mjPanelMonth">Este mes</div>' +
-    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('calendar') + 'Días trabajados</span><strong id="mjDays">0</strong></div>' +
-    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('clock') + 'Horas trabajadas</span><strong id="mjHours">0:00</strong></div>' +
+    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('calendar') + 'Jornadas registradas</span><strong id="mjDays">0</strong></div>' +
+    '<div class="mj-metric"><span class="mj-metric-label">' + glyph('clock') + 'Horas registradas</span><strong id="mjHours">0:00</strong></div>' +
     '<div class="mj-metric extra"><span class="mj-metric-label">' + glyph('plus') + 'Horas extra</span><strong id="mjExtras">0:00</strong></div>' +
     '<div class="mj-metric"><span class="mj-metric-label">' + glyph('cup') + 'Descanso (deben)</span><strong id="mjOwed">0:00</strong></div>' +
     '<div class="mj-metric owed-balance"><span class="mj-metric-label">' + glyph('clock') + '<span>Horas que debo<small>Acumuladas desde el primer registro</small></span></span><strong id="mjOwedAll">0:00</strong></div>' +
     '<div class="mj-metric total"><span class="mj-metric-label">' + glyph('sum') + 'Horas totales</span><strong id="mjTotal">0:00</strong></div>' +
-    '<div class="mj-muted-note">Se cuentan únicamente los registros guardados de este mes; los automáticos usan el horario previsto. Las extras se anotan aparte.</div>';
+    '<div class="mj-muted-note">Se cuentan únicamente los registros guardados de este mes; los automáticos usan el horario previsto. Los registros automáticos representan horas estimadas, no un fichaje real. Las extras se anotan aparte.</div>';
   const insights = document.createElement('aside');
   insights.className = 'mj-insights';
   insights.setAttribute('aria-label', 'Información de jornada y mes');
