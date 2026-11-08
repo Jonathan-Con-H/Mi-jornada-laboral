@@ -23,7 +23,8 @@
 <section id="companiesView" class="hidden"><div class="panel"><h2>Mis empresas</h2>
 <p class="muted">Una hoja por trabajo o empresa. Cada hoja tiene su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
 <p class="notice" id="serviceCurrent" role="status"></p><div class="service-list mj-company-tabs" id="serviceList" role="tablist" aria-label="Cambiar entre empresas"></div>
-<div class="actions"><button type="button" class="primary" id="serviceOpenCalendar">Ver calendario de esta empresa</button><button type="button" class="secondary" id="serviceShowForm" aria-expanded="false" aria-controls="serviceForm">+ Nueva empresa</button></div>
+<div class="actions"><button type="button" class="primary" id="serviceOpenCalendar">Ver calendario de esta empresa</button><button type="button" class="secondary" id="serviceShowForm" aria-expanded="false" aria-controls="serviceForm">+ Nueva empresa</button><button type="button" class="secondary" id="serviceRename" aria-expanded="false" aria-controls="serviceRenameForm">Cambiar nombre</button></div>
+<form id="serviceRenameForm" hidden><label class="field">Nombre de la empresa seleccionada<input id="serviceRenameName" maxlength="80" required></label><div class="actions"><button type="submit" class="primary">Guardar nombre</button></div></form>
 <form id="serviceForm" hidden><h3>Abrir nueva hoja de servicio</h3>
 <div class="fields"><label class="field full">Nombre de la empresa o trabajo<input id="serviceName" maxlength="80" required placeholder="Ej.: Empresa nueva"></label>
 <label class="field">Primer día en la empresa<input id="serviceStart" type="date" required></label>
@@ -609,6 +610,20 @@
     $("serviceShowForm").textContent=expanded?"Cancelar nueva empresa":"+ Nueva empresa";
     if(expanded)$("serviceName").focus();
   };
+  $("serviceRename").onclick=()=>{
+    const form=$("serviceRenameForm"),expanded=form.hidden;
+    form.hidden=!expanded;
+    $("serviceRename").setAttribute("aria-expanded",String(expanded));
+    if(expanded){$("serviceRenameName").value=activeSheet().name;$("serviceRenameName").focus();}
+  };
+  $("serviceRenameForm").onsubmit=event=>{
+    event.preventDefault();
+    const name=$("serviceRenameName").value.trim();
+    if(!name||name.length>80){$("serviceStatus").textContent="Introduce un nombre válido (máximo 80 caracteres).";return;}
+    activeSheet().name=name;persistSheets();renderServices();scheduleCloudSave();
+    $("serviceRenameForm").hidden=true;$("serviceRename").setAttribute("aria-expanded","false");
+    $("serviceStatus").textContent="Empresa renombrada a «"+name+"» sin modificar sus jornadas.";
+  };
   $("serviceOpenCalendar").onclick=()=>{
     const nav=document.querySelector('.mj-bottom-btn[data-mj-go="calendar"]');
     if(nav)nav.click();
@@ -635,7 +650,7 @@
     selected=start;viewDate=parse(start);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();renderSettings();
     scheduleCloudSave();
-    $("serviceName").value="";$("serviceForm").hidden=true;$("serviceShowForm").setAttribute("aria-expanded","false");$("serviceShowForm").textContent="+ Nueva empresa";
+    $("serviceName").value="";$("serviceRenameForm").hidden=true;$("serviceRename").setAttribute("aria-expanded","false");$("serviceForm").hidden=true;$("serviceShowForm").setAttribute("aria-expanded","false");$("serviceShowForm").textContent="+ Nueva empresa";
     $("serviceStatus").textContent="Nueva hoja «"+name+"» creada. Tu trabajo anterior sigue en el historial.";
   };
 
