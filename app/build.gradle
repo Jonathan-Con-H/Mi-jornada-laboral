@@ -7,6 +7,12 @@ android {
     namespace 'es.mijornada.app'
     compileSdk 35
 
+    // Distribución privada fuera de Google Play; la migración del targetSdk
+    // necesita pruebas específicas de Android 13+ antes de hacerla.
+    lint {
+        disable 'ExpiredTargetSdkVersion'
+    }
+
     defaultConfig {
         applicationId 'es.mijornada.app'
         minSdk 24
