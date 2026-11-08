@@ -25,21 +25,15 @@ jobs:
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Comprobar secretos de firma
+      - name: Comprobar que existe la clave privada de firma
         env:
-          MJ_RELEASE_KEYSTORE_B64: ${{ secrets.MJ_RELEASE_KEYSTORE_B64 }}
-          MJ_RELEASE_STORE_PASSWORD: ${{ secrets.MJ_RELEASE_STORE_PASSWORD }}
-          MJ_RELEASE_KEY_ALIAS: ${{ secrets.MJ_RELEASE_KEY_ALIAS }}
-          MJ_RELEASE_KEY_PASSWORD: ${{ secrets.MJ_RELEASE_KEY_PASSWORD }}
+          MJ_RELEASE_BUNDLE_B64: ${{ secrets.MJ_RELEASE_BUNDLE_B64 }}
         shell: bash
         run: |
-          for name in MJ_RELEASE_KEYSTORE_B64 MJ_RELEASE_STORE_PASSWORD MJ_RELEASE_KEY_ALIAS MJ_RELEASE_KEY_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error title=Firma no configurada::Falta el secreto $name. No se publicará ningún APK sin firma estable."
-              exit 1
-            fi
-          done
-
+          if [ -z "${MJ_RELEASE_BUNDLE_B64:-}" ]; then
+            echo "::error title=Firma no configurada::Falta el secreto MJ_RELEASE_BUNDLE_B64. No se publicará ningún APK sin firma estable."
+            exit 1
+          fi
       - name: Instalar Gradle 8.7
         shell: bash
         run: |
@@ -53,21 +47,35 @@ jobs:
 
       - name: Firmar y verificar APK
         env:
-          MJ_RELEASE_KEYSTORE_B64: ${{ secrets.MJ_RELEASE_KEYSTORE_B64 }}
-          MJ_RELEASE_STORE_PASSWORD: ${{ secrets.MJ_RELEASE_STORE_PASSWORD }}
-          MJ_RELEASE_KEY_ALIAS: ${{ secrets.MJ_RELEASE_KEY_ALIAS }}
-          MJ_RELEASE_KEY_PASSWORD: ${{ secrets.MJ_RELEASE_KEY_PASSWORD }}
+          MJ_RELEASE_BUNDLE_B64: ${{ secrets.MJ_RELEASE_BUNDLE_B64 }}
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          printf '%s' "$MJ_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/mijornada-release.jks"
+          KEYSTORE="$RUNNER_TEMP/mijornada-release.jks"
+          SECRET_JSON="$(mktemp "$RUNNER_TEMP/mj-signing.XXXXXXXX")"
+          trap 'rm -f "$KEYSTORE" "$SECRET_JSON"' EXIT
+          printf '%s' "$MJ_RELEASE_BUNDLE_B64" | base64 --decode > "$SECRET_JSON"
+          jq -e '.keystore_b64 | type == "string"' "$SECRET_JSON" >/dev/null
+          jq -e '.store_password | type == "string"' "$SECRET_JSON" >/dev/null
+          jq -e '.key_alias | type == "string"' "$SECRET_JSON" >/dev/null
+          jq -e '.key_password | type == "string"' "$SECRET_JSON" >/dev/null
+          jq -r '.keystore_b64' "$SECRET_JSON" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          export MJ_RELEASE_STORE_PASSWORD="$(jq -r '.store_password' "$SECRET_JSON")"
+          export MJ_RELEASE_KEY_ALIAS="$(jq -r '.key_alias' "$SECRET_JSON")"
+          export MJ_RELEASE_KEY_PASSWORD="$(jq -r '.key_password' "$SECRET_JSON")"
+          for value in MJ_RELEASE_STORE_PASSWORD MJ_RELEASE_KEY_ALIAS MJ_RELEASE_KEY_PASSWORD; do
+            if [ -z "${!value}" ]; then echo '::error::Falta un dato de firma.'; exit 1; fi
+          done
+          echo "::add-mask::$MJ_RELEASE_STORE_PASSWORD"
+          echo "::add-mask::$MJ_RELEASE_KEY_PASSWORD"
           SDK_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
           INPUT_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
           test -s "$INPUT_APK"
           "$SDK_TOOLS/zipalign" -f -p 4 "$INPUT_APK" "$RUNNER_TEMP/mijornada-aligned.apk"
           "$SDK_TOOLS/apksigner" sign \
-            --ks "$RUNNER_TEMP/mijornada-release.jks" \
+            --ks "$KEYSTORE" \
             --ks-key-alias "$MJ_RELEASE_KEY_ALIAS" \
             --ks-pass env:MJ_RELEASE_STORE_PASSWORD \
             --key-pass env:MJ_RELEASE_KEY_PASSWORD \
@@ -76,7 +84,6 @@ jobs:
           "$SDK_TOOLS/apksigner" verify --verbose --print-certs \
             --min-sdk-version 24 "$RUNNER_TEMP/Mi-Jornada-Firmado.apk"
           sha256sum "$RUNNER_TEMP/Mi-Jornada-Firmado.apk"
-
       - name: Guardar solo APK firmado
         uses: actions/upload-artifact@v4
         with:
