@@ -12,7 +12,7 @@ const bubble=document.createElement("button");bubble.id="mj-ai-bubble";bubble.ti
 const panel=document.createElement("section");panel.id="mj-ai-panel";panel.setAttribute("aria-label","Asistente de Mi Jornada");
 panel.innerHTML=[
 "<div class='head'><strong>✦ Asistente · Mi Jornada</strong><button id='mj-ai-full' title='Ampliar'>⛶</button><button id='mj-ai-close'>✕</button></div>",
-"<p id='mj-ai-help'>Consulta tus turnos o registra horas extra con confirmación. Para otras preguntas, Gemini usará un resumen de turnos y horas cuando esté habilitado App Check y tú autorices el envío a Google. No se comparten tus notas.</p>",
+"<p id='mj-ai-help'>Consulta turnos, registra horas extra o pide borrar y recuperar hojas de servicio con confirmación. Para otras preguntas, Gemini usará un resumen de turnos y horas cuando esté habilitado App Check y tú autorices el envío a Google. No se comparten tus notas.</p>",
 "<div id='mj-ai-chat' aria-live='polite'></div>",
 "<div id='mj-ai-confirm'><button id='mj-ai-yes'>Confirmar cambio</button><button id='mj-ai-no'>Cancelar</button></div>",
 "<form id='mj-ai-form'><input id='mj-ai-input' aria-label='Escribe a tu asistente' placeholder='Ej.: ¿Qué turno tengo mañana?' autocomplete='off'>",
@@ -87,7 +87,8 @@ function chooseService(s,items,allowCurrent){
  return items.filter(item=>normalized(item.name)===name||normalized(item.name).includes(name));
 }
 function onCommand(q){
- const s=normalized(q);
+ const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+ const sheetQuery=normalized(s);
  proposal=null;el("mj-ai-confirm").classList.remove("visible");
  const deleting=/\b(?:borra|borrar|elimina|eliminar|envia|mandar|manda)\b/.test(s)&&/\bhoja(?:s)?\b/.test(s);
  const restoring=/\b(?:restaura|restaurar|recupera|recuperar)\b/.test(s)&&/\bhoja(?:s)?\b/.test(s);
@@ -99,7 +100,7 @@ function onCommand(q){
   if(!available.length){
    answer(restoring?"No hay hojas de servicio recuperables en la papelera.":"No hay hojas de servicio disponibles.");return;
   }
-  const matches=chooseService(s,available,deleting);
+  const matches=chooseService(sheetQuery,available,deleting);
   if(matches.length!==1){
    answer((matches.length?"Hay varias hojas con ese nombre. ":"Indícame el nombre de la empresa de la hoja. ")+
      "Opciones: "+available.slice(0,10).map(item=>item.name+" (desde "+(item.startDate||item.deletedAt.slice(0,10))+")").join("; ")+".");return;
