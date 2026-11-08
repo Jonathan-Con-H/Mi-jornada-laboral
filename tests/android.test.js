@@ -20,13 +20,13 @@ function harness() {
   let generated = 0;
   function element(id) {
     if (elements.has(id)) return elements.get(id);
-    const el = {id,value:"",textContent:"",innerHTML:"",style:{},children:[],options:[],
+    const el = {id,value:"",textContent:"",innerHTML:"",style:{},children:[],options:[],attributes:{},
       classList:{add(){},remove(){},toggle(){}},
       addEventListener(type,callback){this[type] = callback;},
       replaceChildren(...children){this.children=children;},
       append(...children){this.children.push(...children);if(id==="vacYear")this.options.push(...children);},
       appendChild(child){this.append(child);},
-      setAttribute(){},click(){if(this.onclick)this.onclick();},
+      setAttribute(name,value){this.attributes[name]=String(value);},click(){if(this.onclick)this.onclick();},
     };
     elements.set(id,el);
     return el;
@@ -101,4 +101,33 @@ test("exportación Android incluye todas las hojas de servicio y no elimina dato
   assert.equal(payload.serviceSheets.items[0].data[h.oldDay].notes,h.original.notes);
   h.window.miJornadaOnBackup(JSON.stringify({ok:true,message:"Copia guardada"}));
   assert.equal(h.element("backupStatus").textContent,"Copia guardada");
+});
+
+
+test("Mis empresas muestra una pestaña por empresa y cambia sin borrar el historial",()=>{
+  const h=harness();
+  assert.match(html,/id="companiesView"/);
+  assert.match(html,/id="serviceList" role="tablist"/);
+  assert.match(html,/id="serviceOpenCalendar"/);
+  assert.match(html,/data-tab="companies"/);
+  const dashboard=fs.readFileSync(path.join(__dirname,"../dashboard.js"),"utf8");
+  assert.match(dashboard,/\['companies','briefcase','Empresas'\]/);
+
+  h.element("serviceName").value="Empresa nueva";
+  h.element("serviceStart").value="2027-01-11";
+  h.element("serviceShift").value="morning";
+  h.element("serviceForm").onsubmit({preventDefault(){}});
+  const tabs=h.element("serviceList").children;
+  assert.equal(tabs.length,2);
+  assert.equal(tabs[0].attributes.role,"tab");
+  assert.equal(tabs[0].attributes["aria-selected"],"false");
+  assert.equal(tabs[1].attributes["aria-selected"],"true");
+  assert.match(tabs[0].textContent,/Mi primera hoja de servicio/);
+  assert.match(tabs[1].textContent,/Empresa nueva/);
+  tabs[0].onclick();
+  const stored=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(stored.items.length,2);
+  assert.equal(stored.activeId,stored.items[0].id);
+  assert.equal(stored.items[0].data[h.oldDay].notes,h.original.notes);
+  assert.equal(h.element("serviceList").children[0].attributes["aria-selected"],"true");
 });
