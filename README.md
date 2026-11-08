@@ -8,14 +8,74 @@ Aplicación Android para consultar el calendario de turnos y registrar la jornad
 - Descanso habitual: 30 minutos.
 - Rotación: tres semanas de mañana y una de tarde; fines de semana de descanso.
 
-## Generar e instalar el APK
-1. Abre la pestaña **Actions** de este repositorio.
-2. Entra en la ejecución más reciente de **Generar APK de Mi Jornada** que tenga una marca verde.
-3. Busca la sección **Artifacts / Artefactos**.
-4. Pulsa el nombre **Mi-Jornada-APK** o el icono de descarga (flecha hacia abajo); **no pulses la papelera**, que elimina el archivo.
-5. Abre el ZIP descargado, extrae `app-debug.apk` e instálalo desde tu móvil Android.
+## Estado de la aplicación Android y actualizaciones (versión 1.3)
 
-La aplicación guarda los datos localmente en el dispositivo. En el apartado «Copias de seguridad» puedes exportar e importar tus registros en formato JSON. Todavía no hay sincronización automática entre dispositivos.
+El proyecto compila un APK Android que guarda las jornadas localmente (WebView) y permite
+guardar una copia de las hojas de servicio en Firestore tras iniciar sesión en **Mi nube**.
+No hay sincronización garantizada si la cuenta no está conectada y confirmada.
+
+### IMPORTANTE: no desinstalar para actualizar
+
+El flujo antiguo `Generar APK de Mi Jornada` hace `assembleDebug` en GitHub Actions.
+**Cada máquina de compilación puede usar otra clave de depuración**, por lo que dos APK
+descargados de distintas ejecuciones pueden no ser compatibles como actualizaciones.
+El mensaje de Android «No se instaló la aplicación» podría deberse a la firma.
+
+**NO desinstales una aplicación que tenga datos sin una copia JSON verificada o una
+copia en la nube cuya recuperación hayas comprobado.** Borrar la aplicación suele
+eliminar sus registros locales. La copia automática de Android no garantiza recuperarlos.
+
+La nueva versión incluye un exportador Android que usa el selector del sistema
+(**Copias de seguridad > Exportar copia**) y guarda un JSON con todas las hojas de
+servicio. Conserva el fichero fuera del móvil y comprueba que existe. La importación
+requiere elegir y confirmar la sustitución de los registros.
+
+### Firma estable para las próximas actualizaciones
+
+El flujo `Mi Jornada - APK Android firmado` genera un APK de distribución **solo**
+cuando estén configurados estos cuatro *GitHub Actions repository secrets*:
+
+- `MJ_RELEASE_KEYSTORE_B64`: contenido de la clave de firma Java (JKS/PKCS12)
+  codificado en Base64, **nunca pegado en archivos del repositorio**.
+- `MJ_RELEASE_STORE_PASSWORD`: contraseña del almacén de claves.
+- `MJ_RELEASE_KEY_ALIAS`: alias de la clave.
+- `MJ_RELEASE_KEY_PASSWORD`: contraseña de la clave privada.
+
+Se configuran en GitHub: **Settings > Secrets and variables > Actions**. No envíes
+contraseñas ni claves privadas por chats, capturas ni incidencias. Guarda una copia
+segura de tu keystore y las contraseñas: perderlas puede impedir actualizar el APK.
+
+Para crear una clave por primera vez en un ordenador con Java instalado, por ejemplo:
+
+```bash
+keytool -genkeypair -v -keystore mi-jornada-release.jks -storetype PKCS12 -alias mi-jornada -keyalg RSA -keysize 3072 -validity 10000
+base64 -w 0 mi-jornada-release.jks
+```
+
+*Nota:* en macOS no existe `base64 -w 0` en todas las versiones; se puede usar
+`base64 < mi-jornada-release.jks | tr -d '\\n'`. El valor Base64 se introduce
+solamente en el secreto de GitHub. Las contraseñas y la clave deben generarse
+y conservarse fuera de este repositorio público.
+
+Una vez configurada la firma, abre **Actions > Mi Jornada - APK Android firmado >
+Run workflow**. Si faltan secretos o la clave es incorrecta, la acción falla sin
+publicar un APK de distribución. Si termina con éxito, descarga el artefacto
+`Mi-Jornada-APK-FIRMADO`. La firma se verifica con `apksigner`.
+
+**La primera instalación del APK firmado no puede actualizar un APK firmado con
+una clave debug distinta.** En ese caso hace falta migrar los datos de forma segura
+antes de reemplazar la aplicación anterior. No desinstales el APK antiguo sin haber
+verificado la copia. A partir del primer APK firmado con la nueva clave estable,
+las futuras versiones firmadas **con esa misma clave** y un `versionCode` superior
+se podrán instalar encima conservando los datos locales, siempre que no cambie
+el identificador `es.mijornada.app`.
+
+### Qué incluye actualmente el APK
+
+Calendario y rotación, registro automático por horarios previstos, jornadas y
+resumen, vacaciones y ausencias, ajustes, papelera de 30 días, varias hojas de
+servicio y copia en la nube. El asistente Gemini de la web **todavía no funciona
+dentro del APK**. La app **no realiza fichajes reales cuando está cerrada**.
 
 ## Registro automático
 - Activado por defecto desde la primera apertura de la versión nueva.
