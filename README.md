@@ -35,3 +35,20 @@ La aplicación guarda los datos localmente en el dispositivo. En el apartado «C
 - Si aparece un error de clave de API restringida, crea/registrar una aplicación web en Firebase y actualiza `firebase-web-config.js` con la configuración web oficial. Esa configuración es pública: **jamás insertar claves secretas o contraseñas de administrador en JavaScript o GitHub Pages**.
 - El asistente web inicial permite consultar turnos, horas debidas y proponer cambios sencillos. **Siempre solicita confirmación para guardar**. Tiene dictado y voz cuando el navegador los admite y chat local; **todavía no integra un modelo de IA** ni sincroniza el historial del chat entre dispositivos.
 - Para una IA conversacional completa habrá que elegir un proveedor seguro y configurar un servicio protegido para llamadas al modelo sin exponer credenciales en el cliente.
+
+## Mejoras web en revisión (rama `feat/proteccion-jornadas-ausencias`)
+
+Estas mejoras se aplican a la **web** y están pendientes de revisión/pruebas finales antes de integrarlas en `main`. No sustituyen ni migran automáticamente la aplicación Android instalada.
+
+- Al pulsar **Enviar a papelera** en una jornada existente, se exige confirmación. Permanece 30 días y puede restaurarse desde **Copias de seguridad > Papelera**. Pasados 30 días se purga sin aviso al abrir o utilizar la web.
+- Las fechas eliminadas se excluyen del registro automático aunque caduque su papelera. Al registrar manualmente o restaurar esa fecha, la exclusión desaparece.
+- Los archivos JSON y la copia web de Firestore incluyen `trash`, `suppressed`, `vacationSettings` y `vacationHistory`, además de jornadas y configuración de registro automático. Las copias antiguas aún son importables.
+- Cada fecha admite jornada, descanso, vacaciones, baja médica, permiso retribuido o ausencia justificada. Un permiso por horas se anota en minutos dentro de una jornada; reduce el cálculo de horas efectivas, no altera su franja de entrada-salida.
+- Desde el apartado **Vacaciones** se consulta el total de días marcados por año y se configura un cupo anual opcional. Si el cupo se supera, se avisa y se pide confirmación. No se presume ningún cupo laboral.
+- Los días de vacaciones se introducen **uno por uno** desde el calendario. El recuento equivale a fechas marcadas, sin descontar automáticamente festivos ni aplicar convenios; confirmar el criterio con la empresa.
+- El historial conserva cambios de tipo relacionados con vacaciones; **todavía no existe** un editor de rangos ni traslados de vacaciones con una única operación. El asistente Gemini no realiza estas operaciones.
+- La automatización completa de bajas, permisos, días festivos locales, movimientos de vacaciones y la actualización del APK permanecen pendientes.
+
+**Seguridad:** al actualizar, exporta una copia JSON antes de importar o recuperar datos desde otra fuente. La recuperación desde Firestore sigue solicitando confirmación ante diferencias. Los registros automáticos son estimaciones basadas en turnos, no fichajes verificados.
+
+Para comprobar esta rama: `node --test tests/registros.test.js`; GitHub Actions ejecuta también comprobaciones de sintaxis.

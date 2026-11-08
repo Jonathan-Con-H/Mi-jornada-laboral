@@ -1,0 +1,24 @@
+name: Comprobar aplicación web
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar scripts JavaScript
+        run: |
+          node --check dashboard.js
+          node --check mi-jornada-assistant.js
+          node --check mi-jornada-gemini.js
+          node --check sw.js
+      - name: Probar protección de jornadas
+        run: node --test tests/registros.test.js

@@ -30,7 +30,19 @@ document.body.appendChild(layer);
 const status=s=>{el("mj-cloud-status").textContent=s;};
 const lastKey=uid=>"miJornada.cloud.last.v1."+uid;
 function local(){return JSON.stringify(bridge.read());}
-function parse(p){const o=JSON.parse(p);if(!o||o.app!=="Mi Jornada"||!o.data||typeof o.data!=="object"||Array.isArray(o.data)||!o.automatico||typeof o.automatico.enabled!=="boolean"||!o.automatico.since)throw Error("Copia no válida");return o;}
+function parse(p){
+  const o=JSON.parse(p);
+  if(!o||o.app!=="Mi Jornada"||!o.data||typeof o.data!=="object"||Array.isArray(o.data)||
+    !o.automatico||typeof o.automatico.enabled!=="boolean"||!o.automatico.since)
+    throw Error("Copia no válida");
+  for(const key of ["trash","suppressed","vacationSettings"]){
+    if(o[key]!==undefined&&(!o[key]||typeof o[key]!=="object"||Array.isArray(o[key])))
+      throw Error("Metadatos de copia inválidos");
+  }
+  if(o.vacationHistory!==undefined&&!Array.isArray(o.vacationHistory))
+    throw Error("Historial de vacaciones inválido");
+  return o;
+}
 function choice(message){ready=false;el("mj-cloud-choose").hidden=false;el("mj-cloud-download").hidden=remote===null;el("mj-cloud-choose-text").textContent=message;status("Elige la copia que deseas conservar.");}
 function synced(message){ready=true;el("mj-cloud-choose").hidden=true;status(message);const label=document.querySelector(".mj-sidebar-foot span");if(label)label.textContent="Nube conectada · datos locales y online";}
 function remember(payload){if(user)localStorage.setItem(lastKey(user.uid),payload);}
@@ -64,7 +76,7 @@ async function save(force){
    const ref=doc(db,"users",uid,"backups","primary"),s=await tx.get(ref);
    const actual=s.exists()?s.data().payload:null;
    if(actual!==expected)throw Error("Otra sesión cambió la copia. Revisa antes de reemplazarla.");
-   tx.set(ref,{payload:payload,updatedAt:serverTimestamp(),schemaVersion:3});
+   tx.set(ref,{payload:payload,updatedAt:serverTimestamp(),schemaVersion:5});
   });
   if(!user||user.uid!==uid)return;
   remote=payload;remember(payload);synced("Guardado en la nube correctamente.");
