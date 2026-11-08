@@ -19,6 +19,7 @@ jobs:
           node --check dashboard.js
           node --check mi-jornada-assistant.js
           node --check mi-jornada-gemini.js
+          node --check mi-jornada-documents.js
           node --check sw.js
       - name: Probar registros y ajustes
         run: node --test tests/*.test.js

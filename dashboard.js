@@ -15,6 +15,7 @@
     sparkles:"m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3z M19 17l.7 1.3L21 19l-1.3.7L19 21l-.7-1.3L17 19l1.3-.7L19 17z",
     settings:"M12 3v2 M12 19v2 M3 12h2 M19 12h2 M5.6 5.6 7 7 M17 17l1.4 1.4 M18.4 5.6 17 7 M7 17l-1.4 1.4 M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8",
     cloud:"M6 18h13a4 4 0 0 0 0-8h-1a6 6 0 0 0-11.6-1.4A5 5 0 0 0 6 18z",
+    briefcase:"M3 7h18v13H3z M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M3 12h18 M10 12v2h4v-2",
     menu:"M4 6h16 M4 12h16 M4 18h16",
     check:"M20 6 9 17l-5-5",
     cup:"M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8 M16 9h2a3 3 0 0 1 0 6h-2 M4 22h15 M8 3v2 M12 3v2",
@@ -48,8 +49,8 @@
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
+    (document.getElementById('serviceList') ? navButton('companies','briefcase','Mis empresas') : '') +
     navButton('settings','settings','Ajustes') +
-    (document.getElementById('serviceList') ? navButton('services','save','Hojas de servicio') : '') +
     navButton('backup','save','Copias de seguridad') +
     navButton('cloud','cloud','Copia en la nube') +
     '</nav><div class="mj-sidebar-foot">' + glyph('cloud') +
@@ -80,6 +81,7 @@
     ['calendar','calendar','Calendario'],
     ['register','clock','Registro'],
     ['summary','chart','Resumen'],
+    ...(document.getElementById('serviceList') ? [['companies','briefcase','Empresas']] : []),
     ['notes','notes','Notas'],
     ['vacations','umbrella','Vacaciones'],
     ['ai','sparkles','IA'],
@@ -266,7 +268,7 @@
     }
     const tabPage = page === 'summary' ? 'summary' :
       page === 'backup' ? 'backup' : page === 'vacations' ? (document.getElementById('vacationsView') ? 'vacations' : 'vacation') :
-      page === 'services' ? 'settings' : page === 'settings' ? 'settings' : 'calendar';
+      page === 'companies' || page === 'services' ? 'companies' : page === 'settings' ? 'settings' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
@@ -278,7 +280,7 @@
       page === 'summary' ? $mj('summaryView') :
       page === 'backup' ? $mj('backupView') :
       page === 'vacations' ? ($mj('vacationView') || $mj('vacationsView')) :
-      page === 'services' ? $mj('serviceList') : $mj('calendarView');
+      page === 'companies' || page === 'services' ? $mj('companiesView') : $mj('calendarView');
     if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
     if (page === 'notes') $mj('notes').focus({preventScroll:true});
   }

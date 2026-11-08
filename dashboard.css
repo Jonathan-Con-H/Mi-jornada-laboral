@@ -168,3 +168,34 @@ main.wrap{padding:14px 8px 98px}
   .mj-sidebar.is-open .mj-sidebar-menu{display:flex;flex:initial;padding:12px 0 7px}
   .mj-sidebar.is-open .mj-sidebar-foot{display:flex;padding-top:12px}
 }
+
+
+/* Mis empresas: una pestaña por hoja de servicio, sin mezclar registros. */
+#companiesView{max-width:980px;margin:auto}
+#companiesView .panel{background:#0d2436}
+#companiesView .service-list.mj-company-tabs{display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;padding:7px 1px 13px;scrollbar-width:thin}
+#companiesView .mj-company-tabs button{display:inline-flex;align-items:center;flex:0 0 auto;max-width:min(320px,72vw);border:1px solid #3d6079;background:#143349;color:#e8f2fa;padding:12px 18px;border-radius:13px;font-size:.94rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:none}
+#companiesView .mj-company-tabs button.active{background:#1877a9;border-color:#79c8f4;color:white;box-shadow:0 0 0 2px #164c69}
+#companiesView .mj-company-tabs button:focus-visible{outline:3px solid #f4c75e;outline-offset:2px}
+#companiesView .actions{justify-content:flex-start;margin:14px 0;flex-wrap:wrap}
+#companiesView .field{background:#102e43;border-radius:12px;padding:12px}
+#companiesView #serviceForm{border-top:1px solid #34536a;margin-top:14px;padding-top:14px}
+#companiesView #serviceForm[hidden],#companiesView #serviceRenameForm[hidden]{display:none!important}
+#companiesView #serviceCurrent{margin-top:12px}
+@media(max-width:570px){
+  .mj-bottom-btn{font-size:.63rem;padding:7px 1px;letter-spacing:-.1px}
+  #companiesView .mj-company-tabs button{font-size:.85rem;padding:11px 14px}
+}
+
+
+/* Casillas del calendario más anchas: conserva colores, bordes y estados existentes. */
+#calendar{width:100%;min-width:0;overscroll-behavior-x:contain}
+@media(max-width:1180px){
+  #calendar{grid-template-columns:repeat(7,minmax(84px,1fr));overflow-x:auto;scrollbar-width:thin}
+}
+@media(max-width:850px){
+  #calendar{grid-template-columns:repeat(7,minmax(68px,1fr))}
+}
+@media(max-width:570px){
+  #calendar{grid-template-columns:repeat(7,minmax(62px,1fr));gap:3px}
+}
