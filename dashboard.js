@@ -43,7 +43,6 @@
     navButton('calendar','calendar','Calendario') +
     navButton('register','clock','Registro jornada') +
     navButton('summary','chart','Resumen') +
-    navButton('stats','pie','Estadísticas') +
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
@@ -203,7 +202,7 @@
       window.dispatchEvent(new CustomEvent('mi-jornada:open-tool',{detail:{page:page}}));
       return;
     }
-    const tabPage = page === 'summary' || page === 'stats' ? 'summary' :
+    const tabPage = page === 'summary' ? 'summary' :
       page === 'backup' ? 'backup' : page === 'vacations' ? 'vacation' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
@@ -213,7 +212,7 @@
     const target = page === 'register' ? $mj('entryForm') :
       page === 'notes' ? $mj('notes') :
       page === 'settings' ? $mj('toggleAuto') :
-      page === 'summary' || page === 'stats' ? $mj('summaryView') :
+      page === 'summary' ? $mj('summaryView') :
       page === 'backup' ? $mj('backupView') :
       page === 'vacations' ? $mj('vacationView') : $mj('calendarView');
     if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
