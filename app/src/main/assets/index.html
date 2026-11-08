@@ -263,9 +263,10 @@
         el=document.createElement("button");
       el.type="button";
       el.className="day "+(v.kind==="work"?v.shift:v.kind)+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"");
-      let note=({rest:"DESC",vacation:"VAC",sick:"BAJA",paid_leave:"PERM",justified:"AUS"}[v.kind])||(v.shift==="morning"?"MAÑ":"TAR");
-      if(data[s]&&v.kind==="work")note=v.stopped?"FIN":v.auto?"AUTO":"EDIT";
-      el.innerHTML=`<span>${n}</span><span class="shift">${note}</span>${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
+      // Mostrar siempre el turno previsto, incluso si la jornada ya está registrada.
+      // Los días libres permanecen neutros: no mostrar la antigua etiqueta «DESC».
+      const shiftLabel=v.kind==="work"?(v.shift==="morning"?"Mañana":"Tarde"):"";
+      el.innerHTML=`<span>${n}</span>${shiftLabel?`<span class="shift">${shiftLabel}</span>`:""}${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
       el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
       root.append(el);
     }
