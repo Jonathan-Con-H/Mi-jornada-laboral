@@ -13,6 +13,29 @@
 #mjEntryPanel{scroll-margin-top:18px}
 #mjCloseEntry{border:1px solid #47728d;background:#17364d;color:#f4faff;padding:8px 12px;border-radius:10px;font-size:.8rem}
 </style>
+<style id="mj-android-calendario-compacto">
+/* Solo Android: casillas más compactas sin adelgazar sus bordes de turno. */
+.calendar{row-gap:6px}
+.calendar .day:not(.empty){
+  justify-self:center;
+  width:calc(100% - 28px);
+  min-height:60px;
+  height:60px;
+  max-height:60px;
+  padding:5px 1px 2px;
+  border-radius:10px;
+  font-size:1.05rem;
+  gap:1px;
+}
+.calendar .day.morning,.calendar .day.afternoon,
+.calendar .day.holiday,.calendar .day.vacation{border-width:4px}
+.calendar .day.rest{border-width:1px}
+.calendar .day .shift{font-size:.69rem;white-space:nowrap}
+@media(max-width:570px){
+  .calendar .day:not(.empty){width:calc(100% - 4px);height:54px;min-height:54px;max-height:54px}
+  .calendar .day .shift{font-size:.57rem}
+}
+</style>
 <style id="mj-documents-css">
 #documentsView .mj-doc-forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 #documentsView .mj-doc-form{border:1px solid #35526b;border-radius:13px;padding:14px}
@@ -262,12 +285,23 @@
       const d=new Date(viewDate.getFullYear(),viewDate.getMonth(),n),s=iso(d),v=entry(s),
         el=document.createElement("button");
       el.type="button";
-      el.className="day "+(v.kind==="work"?v.shift:v.kind)+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"");
-      // Mostrar siempre el turno previsto, incluso si la jornada ya está registrada.
-      // Los días libres permanecen neutros: no mostrar la antigua etiqueta «DESC».
-      const shiftLabel=v.kind==="work"?(v.shift==="morning"?"Mañana":"Tarde"):"";
+      // En una hoja ya cerrada, mantener visible únicamente la previsión de
+      // turnos de lunes a viernes, sin convertirla en una jornada registrada.
+      // Las ausencias y descansos registrados siguen teniendo prioridad.
+      const sheet=activeSheet();
+      const isProjection=!!(sheet.closedAt&&s>sheet.closedAt&&d.getDay()!==0&&d.getDay()!==6&&!data[s]);
+      const shownShift=isProjection?weekShift(s):(v.kind==="work"?v.shift:null);
+      el.className="day "+(shownShift||v.kind)+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"")+(isProjection?" projected":"");
+      const shiftLabel=shownShift?(shownShift==="morning"?"Mañana":"Tarde"):"";
       el.innerHTML=`<span>${n}</span>${shiftLabel?`<span class="shift">${shiftLabel}</span>`:""}${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
-      el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
+      if(isProjection){
+        el.title="Turno previsto, fuera de la hoja de servicio cerrada";
+        el.addEventListener("click",()=>{
+          alert("Es un turno previsto. La hoja de servicio actual está cerrada; abre la hoja correspondiente para registrar este día.");
+        });
+      }else{
+        el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
+      }
       root.append(el);
     }
   }
