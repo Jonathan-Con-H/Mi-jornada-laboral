@@ -1,0 +1,60 @@
+name: Mi Jornada v1.9 - compilar APK sin la clave privada
+on:
+  push:
+    branches:
+      - feat/gemini-papelera-hojas-servicio
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar fuentes
+        uses: actions/checkout@v4
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Instalar Gradle 8.7
+        shell: bash
+        run: |
+          curl --fail --location --silent --show-error https://services.gradle.org/distributions/gradle-8.7-bin.zip -o gradle.zip
+          unzip -q gradle.zip
+      - name: Sincronizar interfaz y asistente en Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js firebase-web-config.js app/src/main/assets/
+          node --check app/src/main/assets/dashboard.js
+          node --check app/src/main/assets/mi-jornada-assistant.js
+          node --check app/src/main/assets/mi-jornada-gemini.js
+          test -s app/src/main/assets/index.html
+      - name: Compilar APK release sin firmar y APK debug
+        run: ./gradle-8.7/bin/gradle --no-daemon assembleRelease assembleDebug
+      - name: Verificar APK resultante
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/build/outputs/apk/release/app-release-unsigned.apk
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          sha256sum app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/debug/app-debug.apk
+      - name: Guardar APK release sin firmar para firma privada posterior
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mi-Jornada-1.9-SIN-FIRMAR-NO-INSTALAR
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Guardar APK debug solo para pruebas, NO ACTUALIZAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mi-Jornada-1.9-DEBUG-NO-ACTUALIZAR
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
