@@ -3,7 +3,7 @@ name: Preparar APK release sin firmar (firma local privada)
 on:
   push:
     branches:
-      - feature/documentos-nominas-justificantes
+      - release/mi-jornada-1.9-completa
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,7 @@ jobs:
       - name: Guardar APK sin firmar
         uses: actions/upload-artifact@v4
         with:
-          name: Mi-Jornada-RELEASE-SIN-FIRMAR-NO-INSTALAR
+          name: Mi-Jornada-1.9-COMPLETA-SIN-FIRMAR
           path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
-          retention-days: 2
+          retention-days: 30
