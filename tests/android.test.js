@@ -131,3 +131,14 @@ test("Mis empresas muestra una pestaña por empresa y cambia sin borrar el histo
   assert.equal(stored.items[0].data[h.oldDay].notes,h.original.notes);
   assert.equal(h.element("serviceList").children[0].attributes["aria-selected"],"true");
 });
+
+
+test("renombrar una empresa actualiza su pestaña sin cambiar jornadas",()=>{
+  const h=harness();
+  h.element("serviceRenameName").value="Mi empresa actual";
+  h.element("serviceRenameForm").onsubmit({preventDefault(){}});
+  const state=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(state.items[0].name,"Mi empresa actual");
+  assert.equal(state.items[0].data[h.oldDay].notes,h.original.notes);
+  assert.match(h.element("serviceList").children[0].textContent,/Mi empresa actual/);
+});
