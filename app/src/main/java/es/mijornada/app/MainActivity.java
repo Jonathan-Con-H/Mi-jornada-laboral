@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     private static final int CREATE_BACKUP_REQUEST = 1002;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private DocumentStore documentStore;
     private String pendingBackupJson = null;
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
@@ -54,6 +55,8 @@ public class MainActivity extends Activity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         webView.addJavascriptInterface(new CloudBridge(), "AndroidCloud");
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
+        documentStore = new DocumentStore(this, webView);
+        webView.addJavascriptInterface(documentStore, "AndroidDocuments");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -316,6 +319,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (documentStore != null && documentStore.handleResult(requestCode, resultCode, data)) return;
         if (requestCode == CREATE_BACKUP_REQUEST) {
             String content = pendingBackupJson;
             pendingBackupJson = null;
