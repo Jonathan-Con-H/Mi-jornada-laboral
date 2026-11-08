@@ -318,10 +318,25 @@
     if(b.dataset.tab==="summary")renderSummary();if(b.dataset.tab==="vacations")renderVacations();if(b.dataset.tab==="settings")renderSettings();
   }));
   $("exportBtn").onclick=()=>{
-    const blob=new Blob([JSON.stringify({app:"Mi Jornada",version:6,exportedAt:new Date().toISOString(),data,automatico:config,trash,suppressed,vacationSettings,androidSettings:settings,serviceSheets:(persistSheets(),clone(sheetsState))},null,2)],{type:"application/json"}),
-      url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=`mi-jornada-copia-${today()}.json`;a.click();URL.revokeObjectURL(url);
-    $("backupStatus").textContent="Copia exportada. Comprueba que el archivo se haya guardado.";
+    const json=JSON.stringify({app:"Mi Jornada",version:6,exportedAt:new Date().toISOString(),data,automatico:config,trash,suppressed,vacationSettings,androidSettings:settings,serviceSheets:(persistSheets(),clone(sheetsState))},null,2);
+    const filename=`mi-jornada-copia-${today()}.json`;
+    if(window.AndroidBackup&&typeof window.AndroidBackup.exportJson==="function"){
+      $("backupStatus").textContent="Elige una carpeta y confirma dónde guardar la copia de todas tus hojas de servicio.";
+      window.AndroidBackup.exportJson(filename,json);
+      return;
+    }
+    const blob=new Blob([json],{type:"application/json"});
+    const url=URL.createObjectURL(blob),link=document.createElement("a");
+    link.href=url;link.download=filename;link.click();URL.revokeObjectURL(url);
+    $("backupStatus").textContent="Comprueba que el archivo JSON se haya guardado.";
+  };
+  window.miJornadaOnBackup=function(raw){
+    try {
+      const result=JSON.parse(raw);
+      $("backupStatus").textContent=result&&result.message||"No se pudo confirmar el resultado de la copia.";
+    } catch(error) {
+      $("backupStatus").textContent="No se pudo comprobar si la copia se guardó.";
+    }
   };
   $("importFile").addEventListener("change",async ev=>{
     const file=ev.target.files[0];if(!file)return;
