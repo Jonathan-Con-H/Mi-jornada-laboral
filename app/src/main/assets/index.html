@@ -23,6 +23,7 @@
 <section id="settingsView" class="hidden"><div class="panel"><h2>Hojas de servicio</h2>
 <p class="muted">Una hoja por trabajo o empresa. Cada hoja tiene su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
 <p class="notice" id="serviceCurrent"></p><div class="service-list" id="serviceList"></div>
+<h3>Papelera de hojas de servicio (30 días)</h3><div class="service-list" id="serviceTrashList"></div>
 <form id="serviceForm"><h3>Abrir nueva hoja de servicio</h3>
 <div class="fields"><label class="field full">Nombre de la empresa o trabajo<input id="serviceName" maxlength="80" required placeholder="Ej.: Empresa nueva"></label>
 <label class="field">Primer día en la empresa<input id="serviceStart" type="date" required></label>
@@ -114,7 +115,7 @@
   function saveConfig(){localStorage.setItem(AUTO_KEY,JSON.stringify(config));persistSheets();scheduleCloudSave();}
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function newLegacyState(){
-    return {activeId:"initial",items:[{id:"initial",name:"Mi primera hoja de servicio",startDate:"2026-10-19",
+    return {activeId:"initial",deleted:[],items:[{id:"initial",name:"Mi primera hoja de servicio",startDate:"2026-10-19",
       anchor:"2026-10-19",pattern:["morning","afternoon","morning","morning"],closedAt:null,
       data:clone(data),automatico:clone(config),trash:clone(trash),suppressed:clone(suppressed),
       vacationSettings:clone(vacationSettings),androidSettings:clone(settings)}]};
@@ -129,6 +130,18 @@
   let sheetsState=null;
   try{const stored=JSON.parse(localStorage.getItem(SHEETS_KEY)||"null");if(validSheets(stored))sheetsState=stored;}catch(_){}
   if(!sheetsState)sheetsState=newLegacyState();
+  if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
+  // Una hoja eliminada conserva sus registros completos durante 30 días.
+  function cleanServiceTrash(){
+    const cutoff=Date.now()-2592000000;
+    const remaining=sheetsState.deleted.filter(item=>item&&item.sheet&&typeof item.sheet.id==="string"&&
+      Number.isFinite(Date.parse(item.deletedAt))&&Date.parse(item.deletedAt)>=cutoff);
+    if(remaining.length!==sheetsState.deleted.length){
+      sheetsState.deleted=remaining;
+      localStorage.setItem(SHEETS_KEY,JSON.stringify(sheetsState));
+    }
+  }
+  cleanServiceTrash();
   function activeSheet(){return sheetsState.items.find(i=>i.id===sheetsState.activeId);}
   function persistSheets(){
     const item=activeSheet();if(!item)return;
@@ -149,6 +162,31 @@
     selected=next.closedAt||today();hideEntryPanel();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();renderServices();renderServices();
     scheduleCloudSave();
+  }
+  function deleteServiceSheet(id){
+    persistSheets();
+    const index=sheetsState.items.findIndex(item=>item.id===id);
+    if(index===-1)throw Error("No se ha encontrado la hoja.");
+    if(sheetsState.items.length===1)throw Error("No se puede eliminar la única hoja. Crea otra primero.");
+    const removed=sheetsState.items.splice(index,1)[0];
+    sheetsState.deleted.push({sheet:clone(removed),deletedAt:new Date().toISOString()});
+    if(sheetsState.activeId===id){
+      activateSheet(sheetsState.items[0].id);
+    }else{
+      persistSheets();renderServices();scheduleCloudSave();
+    }
+    return {id:removed.id,name:removed.name,records:Object.keys(removed.data||{}).length};
+  }
+  function restoreServiceSheet(id){
+    cleanServiceTrash();
+    const index=sheetsState.deleted.findIndex(item=>item.sheet.id===id);
+    if(index===-1)throw Error("La hoja no está en la papelera o ya ha caducado.");
+    if(sheetsState.items.length>=200)throw Error("Se ha alcanzado el límite de hojas.");
+    if(sheetsState.items.some(item=>item.id===id))throw Error("Ya existe una hoja con ese identificador.");
+    const restored=sheetsState.deleted.splice(index,1)[0].sheet;
+    sheetsState.items.push(clone(restored));
+    persistSheets();renderServices();scheduleCloudSave();
+    return {id:restored.id,name:restored.name};
   }
   persistSheets();
   function weekShift(s) {
@@ -583,6 +621,27 @@
       };
       list.append(button);
     }
+    cleanServiceTrash();
+    const trashList=$("serviceTrashList");
+    trashList.replaceChildren();
+    if(!sheetsState.deleted.length){
+      const empty=document.createElement("p");
+      empty.className="muted";empty.textContent="No hay hojas eliminadas.";
+      trashList.append(empty);
+    }
+    for(const removed of sheetsState.deleted){
+      const button=document.createElement("button");
+      button.type="button";
+      button.textContent="Restaurar «"+removed.sheet.name+"» · eliminada "+fmt(removed.deletedAt.slice(0,10));
+      button.onclick=()=>{
+        if(!confirm("¿Restaurar la hoja «"+removed.sheet.name+"» con todos sus registros?"))return;
+        try{
+          restoreServiceSheet(removed.sheet.id);
+          $("serviceStatus").textContent="Hoja «"+removed.sheet.name+"» restaurada.";
+        }catch(error){$("serviceStatus").textContent=error.message;}
+      };
+      trashList.append(button);
+    }
   }
   $("serviceForm").onsubmit=event=>{
     event.preventDefault();
@@ -684,6 +743,21 @@ window.miJornadaBridge = {
     saveMeta(); save();
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
   },
+  services: function(){
+    return clone(sheetsState.items.map(item=>({
+      id:item.id,name:item.name,startDate:item.startDate,closedAt:item.closedAt,
+      records:Object.keys(item.data||{}).length,active:item.id===sheetsState.activeId
+    })));
+  },
+  deletedServices: function(){
+    cleanServiceTrash();
+    return clone(sheetsState.deleted.map(item=>({
+      id:item.sheet.id,name:item.sheet.name,deletedAt:item.deletedAt,
+      records:Object.keys(item.sheet.data||{}).length
+    })));
+  },
+  deleteService: function(id){return deleteServiceSheet(id);},
+  restoreService: function(id){return restoreServiceSheet(id);},
   redraw: function () {
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
   }
