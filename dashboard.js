@@ -247,6 +247,19 @@
   };
   function choose(page) {
     setMenuOpen(false);
+    // Android abre la edición solo tras pulsar una fecha. Los accesos a
+    // Registro y Notas vuelven al calendario, sin desplegar el formulario.
+    if (document.getElementById('mjEntryPanel') && (page === 'register' || page === 'notes')) {
+      page = 'calendar';
+      const calendar = document.getElementById('calendar');
+      if (calendar && !document.getElementById('mjDateOnlyHint')) {
+        const hint = document.createElement('p');
+        hint.id = 'mjDateOnlyHint';
+        hint.className = 'muted';
+        hint.textContent = 'Pulsa un día del calendario para abrir su registro de horas o sus notas.';
+        calendar.insertAdjacentElement('afterend',hint);
+      }
+    }
     if (page === 'cloud' || page === 'ai') {
       window.dispatchEvent(new CustomEvent('mi-jornada:open-tool',{detail:{page:page}}));
       return;
