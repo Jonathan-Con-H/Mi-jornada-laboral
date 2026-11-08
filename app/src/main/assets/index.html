@@ -1,17 +1,23 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-design="lateral-v5-escritorio">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#123a5a"><meta name="description" content="Registro personal de jornada laboral y horas pendientes"><link rel="manifest" href="manifest.webmanifest"><title>Mi Jornada</title>
+<meta charset="utf-8"><meta name="viewport" content="width=1100, user-scalable=yes"><meta name="theme-color" content="#04111f"><meta name="description" content="Registro personal de jornada laboral y horas pendientes"><link rel="manifest" href="manifest.webmanifest"><title>Mi Jornada</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172b3a;background:#f2f6f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#123a5a;color:white;padding:22px 16px 18px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d5e5f0;font-size:.9rem}.wrap{max-width:920px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.tab,button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}.tab{background:#e0eaf1;color:#24445a;white-space:nowrap}.tab.active,button.primary{background:#176b91;color:#fff}.panel{background:#fff;border:1px solid #dce6ec;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #173b5510}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.monthtitle{font-size:1.15rem;font-weight:750}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:14px}.dow{text-align:center;font-size:.75rem;color:#617887;font-weight:700;padding:5px 0}.day{min-height:62px;border:1px solid #e0e8ed;background:#fff;border-radius:10px;padding:6px 2px;color:#18394d;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.88rem}.day .shift{font-size:.65rem;font-weight:750}.day .extra-tag{background:#A78BFA;color:#25104C;border-radius:5px;font-size:.55rem;font-weight:800;line-height:1.25;padding:2px 4px}.day.morning{background:#fff;border:4px solid #38BDF8;color:#18394d}.day.afternoon{background:#fff;border:4px solid #14B8A6;color:#18394d}.day.rest{background:#fff;border:1px solid #e0e8ed;color:#18394d}.day.has-extra>span:first-child{color:#7C3AED;font-weight:850}.day.selected{outline:3px solid #176b91;outline-offset:1px}.day.recorded:not(.has-extra)>span:first-child{color:#c62828;font-weight:850}.day.empty{border:0;background:transparent}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#607583;margin-top:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:650;color:#425c6d}.field input,.field textarea,.field select{width:100%;border:1px solid #cbd9e1;border-radius:10px;padding:11px;font:inherit;color:#172b3a;background:white}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary{background:#e5edf2;color:#24445a}.danger{background:#fde9e7;color:#9a3028}.muted{color:#6b808d;font-size:.88rem}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f2f7fa;border-radius:12px;padding:12px}.stat small{display:block;color:#5f7786;font-size:.75rem}.stat strong{display:block;font-size:1.25rem;margin-top:4px}.hidden{display:none!important}.notice{padding:10px 12px;background:#fff5d9;border-radius:10px;font-size:.85rem;color:#70541b}.foot{font-size:.78rem;color:#6d818d;text-align:center;padding:8px 10px 24px}button:focus-visible,.day:focus-visible{outline:3px solid #f0a43c;outline-offset:2px}@media(max-width:480px){.wrap{padding:10px}.panel{padding:12px}.day{min-height:55px}.stats{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.full{grid-column:auto}}
 .day.vacation{background:#eaf2ff;border:2px solid #2563eb}.day.sick,.day.paid_leave,.day.justified{background:#fff4e0;border:2px solid #d97706}.day.suppressed{opacity:.6}.trash-entry{padding:10px 0;border-top:1px solid #eee;display:flex;justify-content:space-between}
 .service-list{display:grid;gap:8px;margin:12px 0}.service-list button{width:100%;text-align:left;background:#edf4f9;color:#153e58;border:1px solid #c6dae8}.service-list button.active{background:#176b91;color:#fff}.service-note{border-left:3px solid #176b91;padding-left:10px;margin:10px 0}
-</style><link rel="stylesheet" href="./dashboard.css?v=8"></head>
+</style><link rel="stylesheet" href="./dashboard.css?v=9">
+<style id="mj-view-toggle-css">
+#mjViewToggle{display:block;width:calc(100% - 20px);margin:0 10px 13px;background:#133753;border:1px solid #47728d;color:#fff;padding:10px 8px;border-radius:12px;font:650 .84rem system-ui;cursor:pointer}
+#mjViewToggle:focus-visible{outline:2px solid #eebb46;outline-offset:2px}
+#mjEntryPanel{scroll-margin-top:18px}
+#mjCloseEntry{border:1px solid #47728d;background:#17364d;color:#f4faff;padding:8px 12px;border-radius:10px;font-size:.8rem}
+</style></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
 <section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
-<div class="panel"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
+<div class="panel hidden" id="mjEntryPanel" aria-hidden="true"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span><button type="button" id="mjCloseEntry" aria-label="Cerrar registro de horas">Cerrar ✕</button></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
 <section id="vacationsView" class="hidden"><div class="panel"><h2>Vacaciones</h2><p class="muted">Marca los días de vacaciones desde el calendario. Cuenta fechas registradas, no calcula festivos ni convenios.</p><label class="field">Año<select id="vacYear"></select></label><p class="notice" id="vacCounter"></p><label class="field">Cupo anual (días, opcional)<input type="number" id="vacAllowance" min="0" max="366"></label><p><button type="button" id="vacSave" class="primary">Guardar cupo</button></p><div id="vacDays"></div></div></section>
 <section id="settingsView" class="hidden"><div class="panel"><h2>Hojas de servicio</h2>
@@ -89,6 +95,19 @@
     localStorage.setItem(AUTO_KEY,JSON.stringify(config));
   }
   let selected=today();
+  // El registro únicamente se abre al seleccionar una fecha.
+  function showEntryPanel(){
+    const panel=$("mjEntryPanel");
+    panel.classList.remove("hidden");
+    panel.setAttribute("aria-hidden","false");
+    if(typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function hideEntryPanel(){
+    const panel=$("mjEntryPanel");
+    panel.classList.add("hidden");
+    panel.setAttribute("aria-hidden","true");
+  }
+  $("mjCloseEntry").addEventListener("click",hideEntryPanel);
   let viewDate=new Date();viewDate.setDate(1);
   let sumDate=new Date(viewDate);
   function save(){localStorage.setItem(KEY,JSON.stringify(data));persistSheets();scheduleCloudSave();}
@@ -127,7 +146,7 @@
     settings={breakMins:30,owedMins:30,...clone(next.androidSettings||{})};
     localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(AUTO_KEY,JSON.stringify(config));
     saveMeta();persistSheets();
-    selected=next.closedAt||today();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
+    selected=next.closedAt||today();hideEntryPanel();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();renderServices();renderServices();
     scheduleCloudSave();
   }
@@ -202,7 +221,7 @@
       let note=({rest:"DESC",vacation:"VAC",sick:"BAJA",paid_leave:"PERM",justified:"AUS"}[v.kind])||(v.shift==="morning"?"MAÑ":"TAR");
       if(data[s]&&v.kind==="work")note=v.stopped?"FIN":v.auto?"AUTO":"EDIT";
       el.innerHTML=`<span>${n}</span><span class="shift">${note}</span>${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
-      el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();});
+      el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
       root.append(el);
     }
   }
@@ -287,20 +306,20 @@
     }
     data[selected]=r;delete trash[selected];delete suppressed[selected];saveMeta();save();
     renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();
-    $("dayHint").textContent="Día guardado en este dispositivo.";
+    $("dayHint").textContent="Día guardado en este dispositivo.";hideEntryPanel();
   });
   $("stopToday").addEventListener("click",()=>{
     const now=new Date(),e=formEntry();
     if(selected!==today()||e.kind!=="work"||!e.start||nowMins(now)<timeMins(e.start))return;
     data[selected]={...e,end:clock(now),auto:false,stopped:true};delete trash[selected];delete suppressed[selected];saveMeta();
-    save();renderCalendar();loadEntry();renderSummary();
+    save();renderCalendar();loadEntry();renderSummary();hideEntryPanel();
   });
   $("resetDay").addEventListener("click",()=>{
     if(!data[selected]){$("dayHint").textContent="No existe registro que eliminar.";return;}
     if(!confirm("¿Enviar el registro del "+fmt(selected)+" a la papelera durante 30 días?"))return;
     trash[selected]={record:{...data[selected]},deletedAt:new Date().toISOString()};
     suppressed[selected]=true;delete data[selected];saveMeta();save();
-    renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();
+    renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();hideEntryPanel();
   });
   $("toggleAuto").addEventListener("click",()=>{
     config.enabled=!config.enabled;
@@ -308,11 +327,12 @@
     saveConfig();syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();
   });
   ["kind","shift","start","end","breakMins","owed","extraMins","hourlyLeaveMins","notes"].forEach(id=>$(id).addEventListener("input",()=>{preview();updateStopButton();}));
-  $("prevMonth").onclick=()=>{viewDate.setMonth(viewDate.getMonth()-1);renderCalendar();};
-  $("nextMonth").onclick=()=>{viewDate.setMonth(viewDate.getMonth()+1);renderCalendar();};
+  $("prevMonth").onclick=()=>{hideEntryPanel();viewDate.setMonth(viewDate.getMonth()-1);renderCalendar();};
+  $("nextMonth").onclick=()=>{hideEntryPanel();viewDate.setMonth(viewDate.getMonth()+1);renderCalendar();};
   $("sumPrev").onclick=()=>{sumDate.setMonth(sumDate.getMonth()-1);renderSummary();};
   $("sumNext").onclick=()=>{sumDate.setMonth(sumDate.getMonth()+1);renderSummary();};
   document.querySelectorAll("button.tab").forEach(b=>b.addEventListener("click",()=>{
+    hideEntryPanel();
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));
     ["calendar","summary","backup","cloud","vacations","settings"].forEach(t=>$(t+"View").classList.toggle("hidden",t!==b.dataset.tab));
     if(b.dataset.tab==="summary")renderSummary();if(b.dataset.tab==="vacations")renderVacations();if(b.dataset.tab==="settings")renderSettings();
@@ -676,4 +696,31 @@ window.addEventListener("mi-jornada:open-tool", function (event) {
   }
 });
 
-</script><script src="./dashboard.js?v=8"></script><script src="./mi-jornada-gemini.js?v=2"></script><script src="./mi-jornada-assistant.js?v=3"></script></body></html>
+</script><script src="./dashboard.js?v=9"></script><script src="./mi-jornada-gemini.js?v=2"></script><script src="./mi-jornada-assistant.js?v=3"></script>
+<script id="mj-view-toggle-script">
+(function(){
+  var viewport=document.querySelector('meta[name="viewport"]');
+  var aside=document.querySelector('.mj-sidebar');
+  if(!viewport||!aside)return;
+  var prefKey='miJornada.vista.preferida';
+  var isDesktop=localStorage.getItem(prefKey)!=='movil';
+  var btn=document.createElement('button');
+  btn.type='button';btn.id='mjViewToggle';
+  var brand=aside.querySelector('.mj-brand');
+  if(brand)brand.insertAdjacentElement('afterend',btn);
+  else aside.prepend(btn);
+  function apply(){
+    viewport.content=isDesktop?'width=1100, user-scalable=yes':'width=device-width, initial-scale=1, user-scalable=yes';
+    btn.textContent=isDesktop?'Cambiar a vista móvil':'Ver diseño completo';
+    btn.setAttribute('aria-label',isDesktop?'Cambiar a vista móvil adaptada':'Mostrar menú lateral y panel derecho');
+    document.documentElement.setAttribute('data-layout',isDesktop?'escritorio':'movil');
+  }
+  btn.addEventListener('click',function(){
+    isDesktop=!isDesktop;
+    localStorage.setItem(prefKey,isDesktop?'escritorio':'movil');
+    apply();
+    window.scrollTo(0,0);
+  });
+  apply();
+})();
+</script></body></html>
