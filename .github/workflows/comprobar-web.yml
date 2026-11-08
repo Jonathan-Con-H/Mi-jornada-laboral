@@ -1,7 +1,7 @@
 name: Comprobar aplicación web
 on:
   push:
-    branches: [main]
+    branches: [main, release/mi-jornada-1.9-completa]
   pull_request:
     branches: [main]
   workflow_dispatch:
