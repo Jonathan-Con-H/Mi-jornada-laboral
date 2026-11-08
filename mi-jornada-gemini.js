@@ -7,6 +7,53 @@
   const CONSENT_KEY = "miJornada.gemini.compartirContexto.v1";
   let model = null, appCheck = null, loading = null;
 
+  // Cada etapa tiene su propio límite; el consentimiento no consume ese tiempo.
+  function withTimeout(operation, milliseconds, message, onTimeout) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new Error(message));
+        if (onTimeout) onTimeout();
+      }, milliseconds);
+    });
+    return Promise.race([operation, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function isTemporaryError(error) {
+    const status = Number(error && (error.status || (error.customData && error.customData.status)));
+    const message = String(error && error.message || "");
+    // No reintentar cuotas (429), permisos, App Check ni tiempos agotados.
+    return status === 500 || status === 503 || /\[(500|503)(?:\s|\])/.test(message);
+  }
+
+  async function generateWithRetry(generativeModel, prompt, onStatus) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const controller = new AbortController();
+      try {
+        return await withTimeout(
+          generativeModel.generateContent(prompt, { signal: controller.signal, timeout: 35000 }),
+          35000,
+          "Gemini tarda demasiado en responder. Puedes volver a intentarlo sin recargar la página.",
+          () => controller.abort()
+        );
+      } catch (error) {
+        if (error && (error.name === "AbortError" || /timeout|timed out|aborted/i.test(error.message || ""))) {
+          throw new Error("Gemini tarda demasiado en responder. Puedes volver a intentarlo sin recargar la página.");
+        }
+        if (!isTemporaryError(error)) throw error;
+        if (attempt === 2) {
+          throw new Error("Gemini está saturado o temporalmente no disponible. Hemos hecho dos reintentos. Prueba dentro de unos minutos.");
+        }
+        const delay = 2000 * (attempt + 1);
+        if (typeof onStatus === "function") {
+          onStatus("Gemini está ocupado. Reintento " + (attempt + 1) + " de 2 en " + delay / 1000 + " segundos…");
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+        if (typeof onStatus === "function") onStatus("Consultando Gemini… (reintento " + (attempt + 1) + " de 2)");
+      }
+    }
+  }
+
   function localDate(date) {
     return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"),
       String(date.getDate()).padStart(2, "0")].join("-");
@@ -71,12 +118,13 @@
     try { return await loading; } finally { loading = null; }
   }
 
-  async function ask(question, messages) {
+  async function ask(question, messages, onStatus) {
     if (typeof question !== "string" || question.length > 2500) {
       throw new Error("Escribe una consulta de hasta 2500 caracteres.");
     }
     // Primero verifica la configuración. No solicita permiso si Gemini aún no puede usarse.
-    const generativeModel = await getModel();
+    const generativeModel = await withTimeout(getModel(), 25000,
+      "No se ha podido completar la conexión segura con Gemini a tiempo. Puedes volver a intentarlo sin recargar la página.");
     if (localStorage.getItem(CONSENT_KEY) !== "si") {
       const allowed = confirm("Para responder, Gemini (Google) recibirá tu pregunta, los últimos mensajes y un resumen de turnos y horas. No se envían tus notas ni una copia completa del calendario. ¿Lo autorizas?");
       if (!allowed) throw new Error("Has cancelado el envío a Gemini. Tus datos no se han enviado.");
@@ -96,7 +144,7 @@
       "Conversación reciente:\n" + recents,
       "Consulta actual:\n" + question
     ].join("\n\n");
-    const result = await generativeModel.generateContent(prompt);
+    const result = await generateWithRetry(generativeModel, prompt, onStatus);
     const answer = result.response.text().trim();
     if (!answer) throw new Error("Gemini no devolvió texto. Inténtalo de nuevo.");
     return answer;
