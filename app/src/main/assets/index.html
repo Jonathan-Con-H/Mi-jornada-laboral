@@ -133,6 +133,7 @@
   if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
   // Una hoja eliminada conserva sus registros completos durante 30 días.
   function cleanServiceTrash(){
+    if(!Array.isArray(sheetsState.deleted))sheetsState.deleted=[];
     const cutoff=Date.now()-2592000000;
     const remaining=sheetsState.deleted.filter(item=>item&&item.sheet&&typeof item.sheet.id==="string"&&
       Number.isFinite(Date.parse(item.deletedAt))&&Date.parse(item.deletedAt)>=cutoff);
@@ -164,7 +165,7 @@
     scheduleCloudSave();
   }
   function deleteServiceSheet(id){
-    persistSheets();
+    persistSheets();cleanServiceTrash();
     const index=sheetsState.items.findIndex(item=>item.id===id);
     if(index===-1)throw Error("No se ha encontrado la hoja.");
     if(sheetsState.items.length===1)throw Error("No se puede eliminar la única hoja. Crea otra primero.");
