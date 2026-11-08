@@ -102,3 +102,15 @@ test("exportación Android incluye todas las hojas de servicio y no elimina dato
   h.window.miJornadaOnBackup(JSON.stringify({ok:true,message:"Copia guardada"}));
   assert.equal(h.element("backupStatus").textContent,"Copia guardada");
 });
+
+test("el APK mantiene colores de turno con casillas más compactas sin modificar registros",()=>{
+  assert.match(html, /id="mj-android-calendario-compacto"/);
+  assert.match(html, /width:calc\(100% - 28px\)/);
+  assert.match(html, /min-height:60px/);
+  assert.match(html, /\.calendar \.day\.morning,\.calendar \.day\.afternoon/);
+  assert.match(html, /\.day\.vacation\{border-width:4px\}/);
+  assert.match(html, /sheet\.closedAt&&s>sheet\.closedAt/);
+  assert.match(html, /isProjection\?weekShift\(s\)/);
+  const h=harness();
+  assert.equal(JSON.parse(h.storage.get("miJornada.v1"))[h.oldDay].notes,h.original.notes);
+});
