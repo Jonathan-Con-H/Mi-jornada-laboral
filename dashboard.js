@@ -232,7 +232,7 @@
     }
     const tabPage = page === 'summary' ? 'summary' :
       page === 'backup' ? 'backup' : page === 'vacations' ? (document.getElementById('vacationsView') ? 'vacations' : 'vacation') :
-      page === 'settings' || page === 'services' ? 'settings' : 'calendar';
+      page === 'services' ? 'settings' : page === 'settings' ? 'settings' : 'calendar';
     const tab = document.querySelector('button.tab[data-tab="' + tabPage + '"]');
     if (tab) tab.click();
     document.querySelectorAll('[data-mj-go]').forEach(function (btn) {
