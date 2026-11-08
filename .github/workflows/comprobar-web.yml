@@ -20,5 +20,5 @@ jobs:
           node --check mi-jornada-assistant.js
           node --check mi-jornada-gemini.js
           node --check sw.js
-      - name: Probar protección de jornadas
-        run: node --test tests/registros.test.js
+      - name: Probar registros y ajustes
+        run: node --test tests/*.test.js
