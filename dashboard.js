@@ -48,7 +48,7 @@
     navButton('notes','notes','Notas') +
     navButton('vacations','umbrella','Vacaciones') +
     navButton('ai','sparkles','IA Asistente (beta)') +
-    navButton('documents','notes','Documentos') +
+    (document.getElementById('documentsView') ? navButton('documents','notes','Documentos') : '') +
     navButton('settings','settings','Ajustes') +
     (document.getElementById('serviceList') ? navButton('services','save','Hojas de servicio') : '') +
     navButton('backup','save','Copias de seguridad') +
