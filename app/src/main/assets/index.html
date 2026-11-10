@@ -267,7 +267,7 @@
     for(let i=0;i<2200&&iso(day)<=current;i++,day.setDate(day.getDate()+1)){
       const s=iso(day),e=autoEntry(s);
       if(e.kind!=="work"||suppressed[s]||Object.prototype.hasOwnProperty.call(data,s))continue;
-      if(s===current&&nowMins(now)<timeMins(e.start))continue;
+      if(s===today()&&nowMins(now)<timeMins(e.end))continue;
       data[s]={...e,auto:true,stopped:false};
       changed=true;
     }
@@ -300,7 +300,17 @@
       if(isProjection){
         el.title="Turno previsto, fuera de la hoja de servicio cerrada";
         el.addEventListener("click",()=>{
-          alert("Es un turno previsto. La hoja de servicio actual está cerrada; abre la hoja correspondiente para registrar este día.");
+          const disponibles=sheetsState.items.filter(item=>!item.closedAt&&item.startDate<=s);
+          if(disponibles.length===1&&disponibles[0].id!==activeSheet().id){
+            if(!confirm("Este día pertenece a la hoja «"+disponibles[0].name+"». ¿Abrirla para registrar la jornada?"))return;
+            activateSheet(disponibles[0].id);
+            selected=s;viewDate=parse(s);viewDate.setDate(1);
+            renderCalendar();loadEntry();showEntryPanel();
+          }else{
+            alert("Esta hoja está finalizada y el turno mostrado es solo una previsión. Abre la hoja de tu trabajo actual en Ajustes > Hojas de servicio.");
+            const ajustes=document.querySelector('button.tab[data-tab="settings"]');
+            if(ajustes)ajustes.click();
+          }
         });
       }else{
         el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
@@ -333,7 +343,7 @@
     else if(e.stopped)$("dayHint").textContent="Jornada detenida a las "+e.end+". Puedes corregirla o restablecerla.";
     else if(has&&e.auto)$("dayHint").textContent="Jornada apuntada automáticamente según tu horario. Puedes detenerla con el botón.";
     else if(has)$("dayHint").textContent="Jornada guardada manualmente. Puedes corregirla.";
-    else if(config.enabled&&selected>=config.since)$("dayHint").textContent="Jornada prevista. Se apuntará automáticamente al llegar la hora de entrada.";
+    else if(config.enabled&&selected>=config.since)$("dayHint").textContent="Jornada prevista. Se apuntará automáticamente al terminar el turno previsto.";
     else $("dayHint").textContent="Jornada prevista, todavía sin registrar.";
     for(const id of ["kind","shift","start","end","breakMins","owed","extraMins","hourlyLeaveMins","notes"]){
       $(id).value=id==="owed"?String(Math.round((Number(e.owed)||0)*60)):(e[id]??"");
@@ -374,7 +384,7 @@
     $("toggleAuto").textContent=config.enabled?"Desactivar":"Activar";
     $("toggleAuto").className=config.enabled?"secondary":"primary";
     $("autoStatus").textContent=config.enabled?
-      "Activo desde el "+fmt(config.since)+". Las jornadas de lunes a viernes se guardan según el turno cuando llega su hora, al abrir la app o volver a ella. Los días sin abrirla se completan al regresar.":
+      "Activo desde el "+fmt(config.since)+". Las jornadas de lunes a viernes se guardan según el turno al finalizar el turno previsto, al abrir la app o volver a ella. Los días sin abrirla se completan al regresar.":
       "Desactivado. No se crearán nuevas jornadas automáticas hasta que lo actives; tus registros anteriores se conservan.";
   }
   $("entryForm").addEventListener("submit",ev=>{
