@@ -140,7 +140,10 @@ test("una hoja cerrada ofrece recuperar acceso desde el propio calendario",()=>{
 
 test("la actualización incrementa la versión y espera a la salida del turno para registrar",()=>{
   const gradle=fs.readFileSync(path.join(__dirname,"../app/build.gradle"),"utf8");
-  assert.match(gradle,/versionCode 15/);
+  assert.match(gradle,/versionCode 16/);
+  assert.match(html,/id="manualRegister"/);
+  assert.match(html,/id="recoverDays"/);
+  assert.match(html,/syncCompleted: function/);
   assert.match(html,/s===today\(\)&&nowMins\(now\)<timeMins\(e\.end\)/);
   assert.match(html,/id="serviceFixBanner"/);
   assert.match(html,/id="serviceReopen"/);
