@@ -36,7 +36,7 @@ jobs:
       - name: Guardar APK para firmar fuera de GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: Mi-Jornada-2.1-RELEASE-SIN-FIRMA
+          name: Mi-Jornada-2.5-RELEASE-SIN-FIRMA
           path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
           retention-days: 7

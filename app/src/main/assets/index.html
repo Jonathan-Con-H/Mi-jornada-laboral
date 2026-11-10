@@ -58,7 +58,12 @@
 <div class="panel"><div class="notice hidden" id="serviceFixBanner" role="status" style="margin:0 0 12px;padding:14px">
   <p id="serviceFixText" style="margin:0 0 10px"></p>
   <button type="button" class="primary" id="serviceFixButton">Recuperar acceso a jornadas</button>
-</div><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
+</div><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div>
+<div class="actions" id="manualRegistration" style="align-items:flex-end">
+<label class="field" style="flex:1;min-width:145px">Fecha de la jornada<input type="date" id="manualDate" aria-label="Fecha de la jornada"></label>
+<button type="button" class="primary" id="manualRegister">+ Registrar jornada manualmente</button>
+<button type="button" class="secondary" id="recoverDays">Recuperar días pendientes</button>
+</div><p class="muted" id="recoveryStatus" role="status"></p><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel hidden" id="mjEntryPanel" aria-hidden="true"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span><button type="button" id="mjCloseEntry" aria-label="Cerrar registro de horas">Cerrar ✕</button></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
@@ -171,6 +176,7 @@
     localStorage.setItem(AUTO_KEY,JSON.stringify(config));
   }
   let selected=today();
+  $("manualDate").value=selected;
   // El registro únicamente se abre al seleccionar una fecha.
   function showEntryPanel(){
     const panel=$("mjEntryPanel");
@@ -222,7 +228,7 @@
     settings={breakMins:30,owedMins:30,...clone(next.androidSettings||{})};
     localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(AUTO_KEY,JSON.stringify(config));
     saveMeta();persistSheets();
-    selected=next.closedAt||today();hideEntryPanel();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
+    selected=next.closedAt||today();$("manualDate").value=selected;hideEntryPanel();viewDate=parse(selected);viewDate.setDate(1);sumDate=new Date(viewDate);
     syncAutoEntries();renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();renderServices();renderServices();
     scheduleCloudSave();
   }
@@ -325,6 +331,56 @@
     scheduleCloudSave();
   }
   $("serviceFixButton").addEventListener("click",repairServiceAccess);
+  // Entrada manual: protege la separación de registros entre hojas de servicio.
+  function openManualForDate(s){
+    if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s)||iso(parse(s))!==s){
+      alert("Selecciona una fecha válida.");return;
+    }
+    const current=activeSheet();
+    if(s<current.startDate||(current.closedAt&&s>current.closedAt)){
+      const other=suggestedServiceForDate(s);
+      if(other&&other.id!==current.id){
+        if(!confirm("Esta fecha pertenece a «"+other.name+"». ¿Abrir esa hoja para registrar el día?"))return;
+        activateSheet(other.id);
+      }else if(current.closedAt&&s>current.closedAt){
+        if(sheetsState.items.some(item=>item.id!==current.id&&item.startDate>current.closedAt)){
+          alert("Hay otra hoja posterior. Selecciona la hoja correspondiente en Ajustes > Hojas de servicio.");return;
+        }
+        if(!confirm("«"+current.name+"» figura como finalizada el "+fmt(current.closedAt)+". ¿Reabrirla para registrar esta jornada? Los datos anteriores no se borrarán."))return;
+        current.closedAt=null;
+        persistSheets();syncAutoEntries();scheduleCloudSave();
+      }else{
+        alert("La fecha es anterior al comienzo de la hoja actual. Selecciona la hoja correspondiente.");return;
+      }
+    }
+    selected=s;$("manualDate").value=s;
+    viewDate=parse(s);viewDate.setDate(1);
+    renderCalendar();loadEntry();showEntryPanel();
+  }
+  $("manualRegister").addEventListener("click",()=>openManualForDate($("manualDate").value));
+  // Solo añade jornadas estimadas que faltan; jamás pisa entradas reales ni papelera.
+  $("recoverDays").addEventListener("click",()=>{
+    const previous=activeSheet();
+    if(previous.closedAt&&previous.closedAt<today()){
+      repairServiceAccess();
+      if(activeSheet().closedAt&&activeSheet().closedAt<today())return;
+    }
+    const sheet=activeSheet(),from=sheet.startDate,until=sheet.closedAt&&sheet.closedAt<today()?sheet.closedAt:today();
+    if(from>until){$("recoveryStatus").textContent="No hay jornadas finalizadas en esta hoja.";return;}
+    if(!confirm("¿Recuperar las jornadas laborables sin guardar desde el "+fmt(from)+" hasta hoy? Se crearán como estimaciones. Se respetan los registros ya guardados y las eliminaciones voluntarias."))return;
+    let added=0;const now=new Date(),day=parse(from);
+    for(let i=0;i<2200&&iso(day)<=until;i++,day.setDate(day.getDate()+1)){
+      const s=iso(day),e=autoEntry(s);
+      if(e.kind!=="work"||suppressed[s]||Object.prototype.hasOwnProperty.call(data,s))continue;
+      if(s===today()&&nowMins(now)<timeMins(e.end))continue;
+      data[s]={...e,auto:true,stopped:false};added++;
+    }
+    if(added)save();
+    renderCalendar();loadEntry();renderSummary();renderVacations();renderTrash();
+    $("recoveryStatus").textContent=added
+      ?"Recuperadas "+added+" jornadas estimadas. Revisa los días que no hayas trabajado."
+      :"No había jornadas finalizadas pendientes en esta hoja.";
+  });
   function renderCalendar(){
     renderServiceFix();
     $("monthTitle").textContent=monthLabel(viewDate);
@@ -349,24 +405,8 @@
       el.className="day "+(shownShift||v.kind)+(data[s]&&v.kind==="work"?" recorded":"")+(Number(v.extraMins)>0?" has-extra":"")+(s===selected?" selected":"")+(isProjection?" projected":"");
       const shiftLabel=shownShift?(shownShift==="morning"?"Mañana":"Tarde"):"";
       el.innerHTML=`<span>${n}</span>${shiftLabel?`<span class="shift">${shiftLabel}</span>`:""}${Number(v.extraMins)>0?'<span class="extra-tag">EXTRA</span>':''}`;
-      if(isProjection){
-        el.title="Turno previsto, fuera de la hoja de servicio cerrada";
-        el.addEventListener("click",()=>{
-          const disponibles=sheetsState.items.filter(item=>!item.closedAt&&item.startDate<=s);
-          if(disponibles.length===1&&disponibles[0].id!==activeSheet().id){
-            if(!confirm("Este día pertenece a la hoja «"+disponibles[0].name+"». ¿Abrirla para registrar la jornada?"))return;
-            activateSheet(disponibles[0].id);
-            selected=s;viewDate=parse(s);viewDate.setDate(1);
-            renderCalendar();loadEntry();showEntryPanel();
-          }else{
-            alert("Esta hoja está finalizada y el turno mostrado es solo una previsión. Abre la hoja de tu trabajo actual en Ajustes > Hojas de servicio.");
-            const ajustes=document.querySelector('button.tab[data-tab="settings"]');
-            if(ajustes)ajustes.click();
-          }
-        });
-      }else{
-        el.addEventListener("click",()=>{selected=s;renderCalendar();loadEntry();showEntryPanel();});
-      }
+      if(isProjection)el.title="Turno previsto, fuera de la hoja cerrada";
+      el.addEventListener("click",()=>openManualForDate(s));
       root.append(el);
     }
   }
@@ -809,6 +849,7 @@
 
 // API del asistente web adaptada a las hojas de servicio locales de Android.
 window.miJornadaBridge = {
+  syncCompleted: function () { syncAutoEntries(); return true; },
   read: function () {
     return {app:"Mi Jornada",version:5,data:clone(data),automatico:clone(config),
       trash:clone(trash),suppressed:clone(suppressed),vacationSettings:clone(vacationSettings)};

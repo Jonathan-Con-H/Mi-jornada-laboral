@@ -73,7 +73,7 @@ public final class AutomaticJournalJob extends JobService {
                     if (stopping || view != worker) return;
                     // El JS sincroniza jornadas al iniciar; confirmar su carga.
                     view.evaluateJavascript(
-                            "Boolean(window.miJornadaBridge && window.miJornadaBridge.read)",
+                            "Boolean(window.miJornadaBridge && window.miJornadaBridge.syncCompleted && window.miJornadaBridge.syncCompleted())",
                             value -> {
                                 if (stopping) return;
                                 boolean ready = "true".equals(value);

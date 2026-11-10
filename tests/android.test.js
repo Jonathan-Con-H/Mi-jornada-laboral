@@ -140,8 +140,46 @@ test("una hoja cerrada ofrece recuperar acceso desde el propio calendario",()=>{
 
 test("la actualización incrementa la versión y espera a la salida del turno para registrar",()=>{
   const gradle=fs.readFileSync(path.join(__dirname,"../app/build.gradle"),"utf8");
-  assert.match(gradle,/versionCode 15/);
+  assert.match(gradle,/versionCode 16/);
+  assert.match(html,/id="manualRegister"/);
+  assert.match(html,/id="recoverDays"/);
+  assert.match(html,/syncCompleted: function/);
   assert.match(html,/s===today\(\)&&nowMins\(now\)<timeMins\(e\.end\)/);
   assert.match(html,/id="serviceFixBanner"/);
   assert.match(html,/id="serviceReopen"/);
+});
+
+test("el botón manual permite guardar un turno atrasado",()=>{
+  const h=harness();
+  h.element("manualDate").value="2026-11-09";
+  h.element("manualRegister").click();
+  assert.equal(h.element("entryTitle").textContent,"Registro del 09/11/2026");
+  h.element("kind").value="work";
+  h.element("shift").value="morning";
+  h.element("start").value="06:00";
+  h.element("end").value="14:00";
+  h.element("breakMins").value="30";
+  h.element("owed").value="30";
+  h.element("extraMins").value="0";
+  h.element("hourlyLeaveMins").value="0";
+  h.element("notes").value="Turno guardado a mano";
+  h.element("entryForm").submit({preventDefault(){}});
+  const saved=JSON.parse(h.storage.get("miJornada.v1"));
+  assert.equal(saved["2026-11-09"].notes,"Turno guardado a mano");
+  assert.equal(saved["2026-11-09"].auto,false);
+  assert.equal(saved[h.oldDay].notes,h.original.notes);
+});
+
+test("recuperar días pendientes conserva los registros previos y los excluidos",()=>{
+  const h=harness({
+    "miJornada.auto.v1":JSON.stringify({enabled:true,since:"2026-11-09"}),
+    "miJornada.auto.suppressed.v1":JSON.stringify({"2026-10-21":true})
+  });
+  h.element("recoverDays").click();
+  const saved=JSON.parse(h.storage.get("miJornada.v1"));
+  assert.equal(saved["2026-10-20"].auto,true);
+  assert.equal(saved["2026-10-21"],undefined);
+  assert.equal(saved[h.oldDay].notes,h.original.notes);
+  assert.match(h.element("recoveryStatus").textContent,/Recuperadas/);
+  assert.equal(h.window.miJornadaBridge.syncCompleted(),true);
 });
