@@ -62,6 +62,7 @@
 <section id="settingsView" class="hidden"><div class="panel"><h2>Hojas de servicio</h2>
 <p class="muted">Una hoja por trabajo o empresa. Cada hoja tiene su calendario, jornadas, horas y vacaciones. Puedes consultar las anteriores sin borrar nada.</p>
 <p class="notice" id="serviceCurrent"></p><div class="service-list" id="serviceList"></div>
+<div class="actions"><button type="button" class="secondary hidden" id="serviceReopen">Reabrir esta hoja de servicio</button></div>
 <form id="serviceForm"><h3>Abrir nueva hoja de servicio</h3>
 <div class="fields"><label class="field full">Nombre de la empresa o trabajo<input id="serviceName" maxlength="80" required placeholder="Ej.: Empresa nueva"></label>
 <label class="field">Primer día en la empresa<input id="serviceStart" type="date" required></label>
@@ -662,7 +663,11 @@
   function renderServices(){
     const list=$("serviceList");list.replaceChildren();
     const active=activeSheet();
-    $("serviceCurrent").textContent="Hoja activa: "+active.name+(active.closedAt?" · finalizada "+fmt(active.closedAt):"");
+    $("serviceCurrent").textContent="Hoja activa: "+active.name+(active.closedAt?" · finalizada "+fmt(active.closedAt):" · en curso");
+    // Solo ofrecer reabrir si no existe una hoja posterior que pudiera solaparse.
+    const hasLater=sheetsState.items.some(item=>item.id!==active.id&&
+      active.closedAt&&item.startDate>active.closedAt);
+    $("serviceReopen").classList.toggle("hidden",!active.closedAt||hasLater);
     if(!$("serviceStart").value)$("serviceStart").value=today();
     for(const item of sheetsState.items){
       const button=document.createElement("button");
@@ -677,6 +682,20 @@
       list.append(button);
     }
   }
+  $("serviceReopen").onclick=()=>{
+    const current=activeSheet();
+    if(!current.closedAt)return;
+    if(sheetsState.items.some(item=>item.id!==current.id&&item.startDate>current.closedAt)){
+      $("serviceStatus").textContent="Hay una hoja posterior: selecciónala en la lista de hojas de servicio.";renderServices();return;
+    }
+    if(!confirm("¿Reabrir «"+current.name+"»? Solo se eliminará su fecha de cierre; no se borrará ninguna jornada. El registro automático podrá completar días pendientes desde su fecha de activación."))return;
+    current.closedAt=null;
+    persistSheets();
+    syncAutoEntries();
+    renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();
+    scheduleCloudSave();
+    $("serviceStatus").textContent="Hoja reabierta. Revisa el calendario y corrige las jornadas que no hayas trabajado.";
+  };
   $("serviceForm").onsubmit=event=>{
     event.preventDefault();
     const name=$("serviceName").value.trim(),start=$("serviceStart").value,shift=$("serviceShift").value;
