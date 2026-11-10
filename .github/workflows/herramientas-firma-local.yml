@@ -21,6 +21,10 @@ jobs:
           cp "$TOOL_DIR/lib/apksigner.jar" android-signing-tools/lib/
           cp "$TOOL_DIR/apksigner" android-signing-tools/
           cp "$TOOL_DIR/zipalign" android-signing-tools/
+          CPP_LIB="$(find "$ANDROID_HOME/build-tools/35.0.0" -name libc++.so -type f -print -quit)"
+          test -n "$CPP_LIB"
+          mkdir -p android-signing-tools/lib64
+          cp "$CPP_LIB" android-signing-tools/lib64/libc++.so
           chmod +x android-signing-tools/apksigner android-signing-tools/zipalign
       - name: Subir herramientas públicas
         uses: actions/upload-artifact@v4
