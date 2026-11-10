@@ -1,0 +1,31 @@
+name: Herramientas de firma local para APK Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/herramientas-firma-local.yml']
+permissions:
+  contents: read
+jobs:
+  build-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preparar apksigner y zipalign (sin claves privadas)
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOL_DIR="$ANDROID_HOME/build-tools/35.0.0"
+          test -f "$TOOL_DIR/lib/apksigner.jar"
+          test -x "$TOOL_DIR/zipalign"
+          mkdir -p android-signing-tools/lib
+          cp "$TOOL_DIR/lib/apksigner.jar" android-signing-tools/lib/
+          cp "$TOOL_DIR/apksigner" android-signing-tools/
+          cp "$TOOL_DIR/zipalign" android-signing-tools/
+          chmod +x android-signing-tools/apksigner android-signing-tools/zipalign
+      - name: Subir herramientas públicas
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-Signing-Tools-Linux
+          path: android-signing-tools/
+          if-no-files-found: error
+          retention-days: 7
