@@ -30,6 +30,8 @@ import java.util.Map;
 public class MainActivity extends Activity {
     private static final int PICK_FILE_REQUEST = 1001;
     private static final int CREATE_BACKUP_REQUEST = 1002;
+    public static volatile boolean isVisible = false;
+    private long observedBackgroundSync = 0L;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private DocumentStore documentStore;
@@ -44,6 +46,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         auth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
+        observedBackgroundSync = getSharedPreferences(AutomaticJournalJob.PREFS, MODE_PRIVATE)
+                .getLong("lastSuccess", 0L);
+        AutomaticJournalJob.schedule(this);
 
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
@@ -347,6 +352,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        isVisible = true;
+        long stamp = getSharedPreferences(AutomaticJournalJob.PREFS, MODE_PRIVATE)
+                .getLong("lastSuccess", 0L);
+        if (webView != null && stamp > observedBackgroundSync) webView.reload();
+        observedBackgroundSync = stamp;
+    }
+
+    @Override
+    protected void onPause() {
+        isVisible = false;
+        super.onPause();
+    }
+
+    @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
@@ -354,6 +375,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        isVisible = false;
         if (fileCallback != null) {
             fileCallback.onReceiveValue(null);
             fileCallback = null;
