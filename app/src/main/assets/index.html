@@ -355,8 +355,6 @@
     }
     selected=s;$("manualDate").value=s;
     viewDate=parse(s);viewDate.setDate(1);
-    const tab=document.querySelector('button.tab[data-tab="calendar"]');
-    if(tab)tab.click();
     renderCalendar();loadEntry();showEntryPanel();
   }
   $("manualRegister").addEventListener("click",()=>openManualForDate($("manualDate").value));
