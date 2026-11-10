@@ -54,7 +54,11 @@
 </style></head>
 <body><header><h1>📅 Mi Jornada</h1><p>Tu calendario laboral y el control de horas pendientes</p></header><main class="wrap">
 <div class="tabs"><button class="tab active" data-tab="calendar">Calendario</button><button class="tab" data-tab="summary">Resumen mensual</button><button class="tab" data-tab="backup">Copias de seguridad</button><button class="tab" data-tab="documents">Documentos</button><button class="tab" data-tab="cloud">Mi nube</button><button class="tab" data-tab="vacations">Vacaciones</button><button class="tab" data-tab="settings">Ajustes</button></div>
-<section id="calendarView"><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
+<section id="calendarView">
+<div class="notice hidden" id="serviceFixBanner" role="status" style="margin:0 0 12px;padding:14px">
+  <p id="serviceFixText" style="margin:0 0 10px"></p>
+  <button type="button" class="primary" id="serviceFixButton">Recuperar acceso a jornadas</button>
+</div><div class="panel"><div class="row"><button class="secondary" id="prevMonth" aria-label="Mes anterior">‹</button><div class="monthtitle" id="monthTitle"></div><button class="secondary" id="nextMonth" aria-label="Mes siguiente">›</button></div><div class="calendar" id="calendar"></div><div class="legend"><span><i class="dot" style="background:#38BDF8"></i>Mañana</span><span><i class="dot" style="background:#14B8A6"></i>Tarde</span><span><i class="dot" style="background:#A78BFA"></i>Horas extras</span><span><i class="dot" style="background:#c62828"></i>Jornada registrada</span></div></div>
 <div class="panel"><div class="row"><div><strong>Registro automático</strong><p class="muted" id="autoStatus" style="margin:5px 0 0"></p></div><button id="toggleAuto" type="button" class="secondary">Desactivar</button></div></div>
 <div class="panel hidden" id="mjEntryPanel" aria-hidden="true"><div class="row"><h2 style="font-size:1.1rem;margin:0" id="entryTitle">Registro del día</h2><span class="muted" id="autoShift"></span><button type="button" id="mjCloseEntry" aria-label="Cerrar registro de horas">Cerrar ✕</button></div><p class="muted" id="dayHint">Selecciona un día del calendario.</p><form id="entryForm"><div class="fields"><label class="field">Tipo de día<select id="kind"><option value="work">Jornada laboral</option><option value="rest">Descanso / no trabajado</option><option value="vacation">Vacaciones</option><option value="sick">Baja médica</option><option value="paid_leave">Permiso retribuido</option><option value="justified">Ausencia justificada</option></select></label><label class="field">Turno<select id="shift"><option value="morning">Mañana (06:00–14:00)</option><option value="afternoon">Tarde (14:00–22:00)</option></select></label><label class="field">Hora de entrada<input id="start" type="time" value="06:00"></label><label class="field">Hora de salida<input id="end" type="time" value="14:00"></label><label class="field">Descanso (minutos)<input id="breakMins" type="number" min="0" max="600" value="30"></label><label class="field">Tiempo que se debe (minutos)<input id="owed" type="number" min="0" step="1" value="30"></label><label class="field">Horas extras (minutos)<input id="extraMins" type="number" min="0" step="1" value="0"></label><label class="field">Permiso por horas (minutos)<input id="hourlyLeaveMins" type="number" min="0" max="480" value="0"></label><label class="field full">Apuntes del día<textarea id="notes" placeholder="Incidencias, horas extra, observaciones..."></textarea></label></div><div class="actions"><button class="primary" type="submit">Guardar día</button><button class="danger" type="button" id="stopToday">Detener jornada ahora</button><button class="secondary" type="button" id="resetDay">Enviar a papelera</button></div></form><p class="muted" id="calcPreview"></p></div></section>
 <section id="summaryView" class="hidden"><div class="panel"><div class="row"><button class="secondary" id="sumPrev">‹ Mes anterior</button><h2 id="sumTitle" style="font-size:1.05rem"></h2><button class="secondary" id="sumNext">Mes siguiente ›</button></div><div class="stats" style="margin-top:14px"><div class="stat"><small>Días laborables registrados</small><strong id="sDays">0</strong></div><div class="stat"><small>Horas de jornada</small><strong id="sHours">0 h</strong></div><div class="stat"><small>Horas efectivas (sin descanso)</small><strong id="sEffective">0 h</strong></div><div class="stat"><small>Horas que se deben</small><strong id="sOwed">0 h</strong></div><div class="stat"><small>Horas extras</small><strong id="sExtra" style="color:#7C3AED">0 h</strong></div></div><p class="muted" id="sumNote"></p><div id="monthRows"></div></div></section>
@@ -275,7 +279,54 @@
     if(changed)save();
     return changed;
   }
+  function suggestedServiceForDate(s){
+    const candidates=sheetsState.items.filter(item=>item.startDate<=s&&(!item.closedAt||item.closedAt>=s));
+    candidates.sort((a,b)=>b.startDate.localeCompare(a.startDate));
+    return candidates[0]||null;
+  }
+  function renderServiceFix(){
+    const active=activeSheet(),isClosed=!!active.closedAt&&active.closedAt<today();
+    const banner=$("serviceFixBanner");
+    banner.classList.toggle("hidden",!isClosed);
+    if(!isClosed)return;
+    const current=suggestedServiceForDate(today());
+    const latest=sheetsState.items.filter(item=>item.startDate<=today())
+      .sort((a,b)=>b.startDate.localeCompare(a.startDate))[0];
+    const other=(current&&current.id!==active.id)?current:
+      (!current&&latest&&latest.id!==active.id?latest:null);
+    $("serviceFixText").textContent=other
+      ?"Estás viendo una hoja finalizada. Tus jornadas recientes pueden estar en «"+other.name+"»."
+      :"Esta hoja de servicio figura como finalizada el "+fmt(active.closedAt)+". Por eso los días siguientes no se abren ni se registran automáticamente.";
+    $("serviceFixButton").textContent=other?"Abrir hoja de servicio vigente":"Reabrir hoja y recuperar jornadas";
+  }
+  function repairServiceAccess(){
+    const active=activeSheet();
+    if(!active.closedAt||active.closedAt>=today())return;
+    const current=suggestedServiceForDate(today());
+    const latest=sheetsState.items.filter(item=>item.startDate<=today())
+      .sort((a,b)=>b.startDate.localeCompare(a.startDate))[0];
+    const other=(current&&current.id!==active.id)?current:
+      (!current&&latest&&latest.id!==active.id?latest:null);
+    if(other){
+      if(!confirm("¿Abrir la hoja «"+other.name+"»? No se borrarán las jornadas de ninguna hoja."))return;
+      activateSheet(other.id);
+      return;
+    }
+    if(sheetsState.items.some(item=>item.id!==active.id&&item.startDate>active.closedAt)){
+      alert("Existe otra hoja posterior. Selecciónala en Ajustes > Hojas de servicio antes de modificar fechas de cierre.");
+      document.querySelector('button.tab[data-tab="settings"]')?.click();
+      return;
+    }
+    if(!confirm("¿Reabrir «"+active.name+"» para seguir registrando las jornadas? No se borrará ningún dato. Los días pendientes desde el inicio del registro automático se añadirán según el horario previsto."))return;
+    active.closedAt=null;
+    persistSheets();
+    syncAutoEntries();
+    renderAuto();renderCalendar();loadEntry();renderSummary();renderVacations();renderSettings();renderTrash();
+    scheduleCloudSave();
+  }
+  $("serviceFixButton").addEventListener("click",repairServiceAccess);
   function renderCalendar(){
+    renderServiceFix();
     $("monthTitle").textContent=monthLabel(viewDate);
     const root=$("calendar");root.innerHTML="";
     ["L","M","X","J","V","S","D"].forEach(x=>{
