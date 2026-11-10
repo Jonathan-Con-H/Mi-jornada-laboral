@@ -8,13 +8,14 @@ const html = fs.readFileSync(path.join(__dirname, "../app/src/main/assets/index.
 const script = html.match(/<script>\s*([\s\S]*?)<\/script>/);
 assert.ok(script, "El APK contiene el código de sus pantallas");
 
-function harness() {
+function harness(overrides={}) {
   const storage = new Map();
   const oldDay = "2026-11-05";
   const original = { kind:"work",shift:"morning",start:"06:00",end:"14:00",
     breakMins:30,owed:0.5,extraMins:0,notes:"Jornada de mi primera empresa",auto:false };
   storage.set("miJornada.v1", JSON.stringify({[oldDay]:original}));
   storage.set("miJornada.auto.v1", JSON.stringify({enabled:false,since:oldDay}));
+  for(const [key,value] of Object.entries(overrides))storage.set(key,value);
   const elements = new Map();
   const exports = [];
   let generated = 0;
@@ -113,4 +114,34 @@ test("el APK mantiene colores de turno con casillas más compactas sin modificar
   assert.match(html, /isProjection\?weekShift\(s\)/);
   const h=harness();
   assert.equal(JSON.parse(h.storage.get("miJornada.v1"))[h.oldDay].notes,h.original.notes);
+});
+
+
+test("una hoja cerrada ofrece recuperar acceso desde el propio calendario",()=>{
+  const day="2026-11-06";
+  const previous={kind:"work",shift:"morning",start:"06:00",end:"14:00",
+    breakMins:30,owed:0.5,extraMins:0,notes:"jornada conservada",auto:false};
+  const automatico={enabled:true,since:day};
+  const records={[day]:previous};
+  const state={activeId:"initial",items:[{id:"initial",name:"Empresa actual",startDate:"2026-10-19",
+    anchor:"2026-10-19",pattern:["morning","afternoon","morning","morning"],closedAt:day,
+    data:records,automatico,trash:{},suppressed:{},vacationSettings:{},
+    androidSettings:{breakMins:30,owedMins:30}}]};
+  const h=harness({"miJornada.v1":JSON.stringify(records),"miJornada.auto.v1":JSON.stringify(automatico),
+    "miJornada.service.sheets.v1":JSON.stringify(state)});
+  assert.match(h.element("serviceFixText").textContent,/finalizada el/);
+  h.element("serviceFixButton").click();
+  const result=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(result.items[0].closedAt,null);
+  const saved=JSON.parse(h.storage.get("miJornada.v1"));
+  assert.equal(saved[day].notes,"jornada conservada");
+  assert.equal(saved["2026-11-09"].auto,true,"Debe completar días laborables vencidos");
+});
+
+test("la actualización incrementa la versión y espera a la salida del turno para registrar",()=>{
+  const gradle=fs.readFileSync(path.join(__dirname,"../app/build.gradle"),"utf8");
+  assert.match(gradle,/versionCode 14/);
+  assert.match(html,/s===today\(\)&&nowMins\(now\)<timeMins\(e\.end\)/);
+  assert.match(html,/id="serviceFixBanner"/);
+  assert.match(html,/id="serviceReopen"/);
 });
