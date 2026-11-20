@@ -77,14 +77,19 @@ function bulkExtraCommand(q) {
  const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
  if(!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
  const amount=q.match(/(\d+(?:[.,]\d+)?)\s*(horas?|h|minutos?|min)\s*(?:de\s*)?(?:extra|extras)?/);
- const monthIndex=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
- if(monthIndex<0||!amount)return false;
+ let monthIndex=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
+ const relative=/mes que viene|proximo mes|mes siguiente/.test(q);
+ if(monthIndex<0&&!relative)return false;
+ if(!amount){answer("Indica la cantidad de horas extra.");return true;}
+ const today=new Date();
+ if(monthIndex<0)monthIndex=(today.getMonth()+1)%12;
  const quantity=Number(amount[1].replace(",","."));
  const mins=Math.round(quantity*(/^(min|minuto)/.test(amount[2])?1:60));
  if(!Number.isFinite(mins)||mins<=0||mins>720){answer("La cantidad de horas extra no es válida.");return true;}
  const yearMatch=q.match(/\b20\d{2}\b/);
- const year=yearMatch?Number(yearMatch[0]):new Date().getFullYear();
+ const year=yearMatch?Number(yearMatch[0]):(relative&&monthIndex<today.getMonth()?today.getFullYear()+1:today.getFullYear());
  const changes=[],skipped=[];
+ const setInstead=/establece|fija|deja en|pon a/.test(q);
  const days=new Date(year,monthIndex+1,0).getDate();
  for(let d=1;d<=days;d++){
   const date=new Date(year,monthIndex,d,12),key=iso(date);
@@ -92,19 +97,43 @@ function bulkExtraCommand(q) {
   const record=bridge.get(key);
   if(record.kind!=="work"){skipped.push(key);continue;}
   const current=Number(record.extraMins)||0;
-  if(current+mins>1440){skipped.push(key);continue;}
-  changes.push({date:key,record:{...record,extraMins:current+mins},before:current});
+  const next=setInstead?mins:current+mins;
+  if(next>1440){skipped.push(key);continue;}
+  changes.push({date:key,record:{...record,extraMins:next},before:current});
  }
  if(!changes.length){answer("No hay jornadas laborables aptas para esta orden. No he modificado nada.");return true;}
  proposal={changes,what:"Añadir "+mins+" minutos extra a "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
- answer("Propuesta: "+proposal.what+". Total a añadir: "+(mins*changes.length/60)+" horas. Se omiten "+skipped.length+" días (descansos, ausencias o límites). Se SUMARÁ a las horas existentes; repetir la orden las duplicaría. ¿Confirmas?");
+ answer("Propuesta: "+proposal.what+". Variación total: "+(changes.reduce((a,c)=>a+c.record.extraMins-c.before,0)/60)+" horas. Se omiten "+skipped.length+" días (descansos, ausencias o límites). Se SUMARÁ a las horas existentes; repetir la orden las duplicaría. ¿Confirmas?");
  el("mj-ai-confirm").classList.add("visible");
  return true;
+}
+
+function editDayCommand(q){
+ if(!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina)/.test(q))return false;
+ const m=q.match(/\\b(\\d{1,2})[\\/-](\\d{1,2})(?:[\\/-](\\d{4}))?\\b/);
+ if(!m)return false;
+ const y=m[3]?Number(m[3]):new Date().getFullYear(),mo=Number(m[2]),d=Number(m[1]);
+ const date=new Date(y,mo-1,d,12);
+ if(date.getFullYear()!==y||date.getMonth()!==mo-1||date.getDate()!==d){answer("La fecha indicada no existe.");return true;}
+ const key=iso(date),before=bridge.get(key);
+ let record,what;
+ if(/vacaciones/.test(q)){record={...before,kind:"vacation",extraMins:0,auto:false};what="Marcar vacaciones el "+key;}
+ else if(/turno/.test(q)){
+  const shift=/\\btarde\\b/.test(q)?"afternoon":/\\bmanana\\b/.test(q)?"morning":null;
+  if(!shift){answer("Indica turno de mañana o de tarde.");return true;}
+  record={...before,kind:"work",shift,start:shift==="morning"?"06:00":"14:00",end:shift==="morning"?"14:00":"22:00",auto:false};
+  what="Cambiar turno el "+key+" a "+(shift==="morning"?"mañana":"tarde");
+ }else if(/extra/.test(q)&&/quita|elimina/.test(q)){
+  record={...before,extraMins:0,auto:false};what="Eliminar horas extra el "+key;
+ }else return false;
+ proposal={date:key,record,before,what};
+ answer("Vista previa: "+what+". ¿Confirmas? No guardaré nada hasta tu autorización.");
+ el("mj-ai-confirm").classList.add("visible");return true;
 }
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
  proposal=null;el("mj-ai-confirm").classList.remove("visible");
- if(bulkExtraCommand(s))return;
+ if(bulkExtraCommand(s)||editDayCommand(s))return;
  const day=dateByWords(s),key=iso(day),e=bridge.get(key);
  if(/(cuant|total).*(debo|deuda|pendientes|extra)/.test(s)||/horas que debo/.test(s)){
   const snap=bridge.read(),isExtra=/extra/.test(s),now=new Date(),month=now.getMonth(),year=now.getFullYear();
@@ -121,13 +150,13 @@ function onCommand(q){
   const extra=Math.round(Number(match[1].replace(",","."))*60);
   if(e.kind!=="work"){answer("Ese día figura como descanso. Primero debes registrarlo como día trabajado.");return;}
   if(!(extra>0&&extra<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
-  proposal={date:key,record:{...e,extraMins:(Number(e.extraMins)||0)+extra},what:"Añadir "+(extra/60)+" h extra el "+human(day)};
+  proposal={date:key,before:e,record:{...e,extraMins:(Number(e.extraMins)||0)+extra},what:"Añadir "+(extra/60)+" h extra el "+human(day)};
   answer("Voy a "+proposal.what.toLowerCase()+". ¿Confirmas? No lo guardaré hasta que pulses «Confirmar cambio».");
   el("mj-ai-confirm").classList.add("visible");return;
  }
  if(/sabado.*trabaj|trabaj.*sabado/.test(s)){
   const d=dateByWords("sabado"),k=iso(d),record=bridge.get(k);
-  proposal={date:k,record:{...record,kind:"work",breakMins:30,owed:.5,auto:false},what:"Registrar trabajo el "+human(d)};
+  proposal={date:k,before:record,record:{...record,kind:"work",breakMins:30,owed:.5,auto:false},what:"Registrar trabajo el "+human(d)};
   answer("Puedo marcar el "+human(d)+" como trabajado, con el turno previsto y 30 minutos de descanso. ¿Confirmas?");
   el("mj-ai-confirm").classList.add("visible");return;
  }
@@ -142,7 +171,7 @@ window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page===
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
 el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
-el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
+el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){if((Number(bridge.get(c.date).extraMins)||0)!==c.before)throw Error("El día "+c.date+" cambió desde la vista previa.");bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{if(p.before&&JSON.stringify(bridge.get(p.date))!==JSON.stringify(p.before))throw Error("El registro cambió desde la vista previa.");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
 el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
 el("mj-ai-voice").checked=voiceEnabled;
