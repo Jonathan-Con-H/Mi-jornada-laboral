@@ -46,6 +46,51 @@ function dateByWords(q){
 }
 function human(d){return d.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});}
 let geminiBusy = false;
+
+function applyGeminiIntent(intent){
+ const allowed=["add_extra","set_extra","remove_extra","set_shift","set_vacation"];
+ if(!intent||!allowed.includes(intent.action))return false;
+ const datePattern=/^20\\d{2}-(0[1-9]|1[0-2])-([0-2]\\d|3[01])$/;
+ const validDate=key=>{if(typeof key!=="string"||!datePattern.test(key))return false;const d=new Date(key+"T12:00:00");return iso(d)===key;};
+ const changes=[];
+ if(intent.scope==="worked_days_month"){
+  if(!["add_extra","set_extra","remove_extra"].includes(intent.action))throw Error("Operación mensual no permitida.");
+  const month=Number(intent.month),year=Number(intent.year);
+  if(!Number.isInteger(month)||month<1||month>12||!Number.isInteger(year)||year<2020||year>2100)throw Error("Mes o año no válido.");
+  for(let day=1;day<=new Date(year,month,0).getDate();day++){
+   const key=iso(new Date(year,month-1,day,12)),d=new Date(key+"T12:00:00");
+   if(d.getDay()===0||d.getDay()===6)continue;
+   const before=bridge.get(key);
+   if(before.kind!=="work")continue;
+   changes.push({date:key,before,record:null});
+  }
+ }else if(intent.scope==="day"&&validDate(intent.date)){
+  const before=bridge.get(intent.date);
+  changes.push({date:intent.date,before,record:null});
+ }else throw Error("Indica una fecha concreta o un mes completo de días trabajados.");
+ if(changes.length>31)throw Error("Demasiados días para una sola operación.");
+ const minutes=Number(intent.minutes);
+ if(["add_extra","set_extra"].includes(intent.action)&&(!Number.isInteger(minutes)||minutes<1||minutes>720))throw Error("Indica entre 1 y 720 minutos extra.");
+ if(intent.action==="set_shift"&&!["morning","afternoon"].includes(intent.shift))throw Error("Turno no válido.");
+ for(const change of changes){
+  const e=change.before;
+  if(["add_extra","set_extra"].includes(intent.action)&&e.kind!=="work")throw Error("El "+change.date+" no está marcado como trabajado.");
+  if(intent.action==="add_extra")change.record={...e,extraMins:(Number(e.extraMins)||0)+minutes};
+  if(intent.action==="set_extra")change.record={...e,extraMins:minutes};
+  if(intent.action==="remove_extra")change.record={...e,extraMins:0};
+  if(intent.action==="set_shift"){
+   const morning=intent.shift==="morning";
+   change.record={...e,kind:"work",shift:intent.shift,start:morning?"06:00":"14:00",end:morning?"14:00":"22:00",auto:false};
+  }
+  if(intent.action==="set_vacation")change.record={...e,kind:"vacation",extraMins:0,auto:false};
+  if(!Number.isFinite(Number(change.record.extraMins))||Number(change.record.extraMins)>1440)throw Error("Límite de horas extra excedido.");
+ }
+ if(!changes.length){answer("No hay días trabajados que cumplan la orden. No he cambiado nada.");return true;}
+ const what=intent.action+" en "+changes.length+" día(s): "+changes.map(c=>c.date).join(", ");
+ proposal={changes:changes.map(c=>({...c,beforeExtra:Number(c.before.extraMins)||0})),what};
+ answer("Gemini ha interpretado esta propuesta (sin guardar): "+what+". Pulsa «Confirmar cambio» para aplicarla o «Cancelar» para descartarla.");
+ el("mj-ai-confirm").classList.add("visible");return true;
+}
 function askWithGemini(q) {
   if (!window.miJornadaGemini) {
     answer("El motor Gemini todavía no se ha cargado. Puedes seguir consultando turnos y horas.");
@@ -58,9 +103,9 @@ function askWithGemini(q) {
   el("mj-ai-chat").appendChild(loading);
   el("mj-ai-chat").scrollTop = el("mj-ai-chat").scrollHeight;
   // El motor limita cada etapa y cada petición, sin contar el diálogo de permiso.
-  Promise.resolve().then(() => window.miJornadaGemini.ask(q, history.slice(-8),
+  Promise.resolve().then(() => window.miJornadaGemini.interpret(q, history.slice(-8),
     status => { loading.textContent = status; }))
-    .then(text => answer(text))
+    .then(intent => {if(!applyGeminiIntent(intent))return window.miJornadaGemini.ask(q,history.slice(-8)).then(answer);})
     .catch(error => {
       const message = error && error.message ? error.message : "Error de conexión.";
       if (/Failed to fetch/i.test(message)) {
@@ -171,7 +216,7 @@ window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page===
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
 el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
-el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){if((Number(bridge.get(c.date).extraMins)||0)!==c.before)throw Error("El día "+c.date+" cambió desde la vista previa.");bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{if(p.before&&JSON.stringify(bridge.get(p.date))!==JSON.stringify(p.before))throw Error("El registro cambió desde la vista previa.");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
+el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){if(JSON.stringify(bridge.get(c.date))!==JSON.stringify(c.beforeExtra===undefined?bridge.get(c.date):c.before))throw Error("El día "+c.date+" cambió desde la vista previa.");bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{if(p.before&&JSON.stringify(bridge.get(p.date))!==JSON.stringify(p.before))throw Error("El registro cambió desde la vista previa.");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
 el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
 el("mj-ai-voice").checked=voiceEnabled;
