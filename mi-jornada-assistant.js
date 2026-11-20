@@ -152,21 +152,25 @@ function bulkExtraCommand(q) {
   const current=Number(record.extraMins)||0;
   const next=setInstead?mins:current+mins;
   if(next>1440){skipped.push(key);continue;}
-  changes.push({date:key,record:{...record,extraMins:next},before:current});
+  changes.push({date:key,before:record,beforeExtra:current,record:{...record,extraMins:next}});
  }
  if(!changes.length){answer("No hay jornadas laborables aptas para esta orden. No he modificado nada.");return true;}
- const added=changes.reduce((a,c)=>a+c.record.extraMins-c.before,0);
+ const added=changes.reduce((a,c)=>a+c.record.extraMins-c.beforeExtra,0);
  proposal={changes,what:(setInstead?"Establecer":"Añadir")+" "+formatExtraMinutes(mins)+" extra en "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
- const detail=changes.map(c=>c.date+": "+formatExtraMinutes(c.before)+" → "+formatExtraMinutes(c.record.extraMins)).join("; ");
+ const detail=changes.map(c=>c.date+": "+formatExtraMinutes(c.beforeExtra)+" → "+formatExtraMinutes(c.record.extraMins)).join("; ");
  answer("Propuesta sin guardar: "+proposal.what+". Cambio total: "+formatExtraMinutes(added)+". Días y valores: "+detail+". Se omiten "+skipped.length+" días (descansos, ausencias o límites). Repetir «añadir» sumaría otra vez. Pulsa «Confirmar cambio» para guardar o «Cancelar».");
  el("mj-ai-confirm").classList.add("visible");
  return true;
 }
 function editDayCommand(q){
- if(!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina)/.test(q))return false;
- const m=q.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{4}))?\b/);
- if(!m)return false;
- const y=m[3]?Number(m[3]):new Date().getFullYear(),mo=Number(m[2]),d=Number(m[1]);
+ if(!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina|anad|agreg|apunt|sum)/.test(q))return false;
+ const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+ const numeric=q.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{4}))?\b/);
+ const named=q.match(/\b(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s+de\s+(20\d{2}))?\b/);
+ if(!numeric&&!named)return false;
+ const d=numeric?Number(numeric[1]):Number(named[1]);
+ const mo=numeric?Number(numeric[2]):months.indexOf(named[2])+1;
+ const y=numeric?(numeric[3]?Number(numeric[3]):new Date().getFullYear()):(named[3]?Number(named[3]):new Date().getFullYear());
  const date=new Date(y,mo-1,d,12);
  if(date.getFullYear()!==y||date.getMonth()!==mo-1||date.getDate()!==d){answer("La fecha indicada no existe.");return true;}
  const key=iso(date),before=bridge.get(key);
@@ -179,9 +183,16 @@ function editDayCommand(q){
   what="Cambiar turno el "+key+" a "+(shift==="morning"?"mañana":"tarde");
  }else if(/extra/.test(q)&&/quita|elimina/.test(q)){
   record={...before,extraMins:0,auto:false};what="Eliminar horas extra el "+key;
+ }else if(/extra/.test(q)&&/(anad|agreg|apunt|pon|registr|sum)/.test(q)){
+  const minutes=parseExtraMinutes(q);
+  if(minutes===null){answer("Dime cuántas horas o minutos extra quieres añadir.");return true;}
+  if(minutes<=0||minutes>720){answer("Indica entre 1 minuto y 12 horas extra.");return true;}
+  if(before.kind!=="work"){answer("Ese día no está marcado como trabajado. No he cambiado nada.");return true;}
+  record={...before,extraMins:(Number(before.extraMins)||0)+minutes,auto:false};
+  what="Añadir "+formatExtraMinutes(minutes)+" extra el "+human(date);
  }else return false;
  proposal={date:key,record,before,what};
- answer("Vista previa: "+what+". ¿Confirmas? No guardaré nada hasta tu autorización.");
+ answer("Vista previa sin guardar: "+what+". ¿Confirmas? No guardaré nada hasta que pulses «Confirmar cambio».");
  el("mj-ai-confirm").classList.add("visible");return true;
 }
 function onCommand(q){
@@ -200,7 +211,10 @@ function onCommand(q){
   answer("Este mes llevas "+Math.floor(total/60)+" horas y "+(total%60)+" minutos "+(isExtra?"extra registrados.":"que debes por descansos en las jornadas registradas."));return;
  }
  const extra=parseExtraMinutes(s);
- if(extra!==null&&/(anad|apunt|pon|registr|sum)/.test(s)){
+ if(extra!==null&&/(anad|agreg|apunt|pon|registr|sum)/.test(s)){
+  if(!/\b(hoy|manana|pasado manana|sabado|domingo)\b/.test(s)){
+   answer("Indica a qué día se refiere la orden (por ejemplo, «hoy», «mañana» o una fecha). No he cambiado nada.");return;
+  }
   const extraMinutes=extra;
   if(e.kind!=="work"){answer("Ese día figura como descanso. Primero debes registrarlo como día trabajado.");return;}
   if(!(extraMinutes>0&&extraMinutes<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
