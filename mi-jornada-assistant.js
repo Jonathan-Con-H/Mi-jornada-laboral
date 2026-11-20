@@ -71,9 +71,40 @@ function askWithGemini(q) {
     })
     .finally(() => { loading.remove(); geminiBusy = false; });
 }
+
+// Órdenes masivas deterministas: Gemini no puede escribir registros directamente.
+function bulkExtraCommand(q) {
+ const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+ if(!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
+ const amount=q.match(/(\d+(?:[.,]\d+)?)\s*(horas?|h|minutos?|min)\s*(?:de\s*)?(?:extra|extras)?/);
+ const monthIndex=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
+ if(monthIndex<0||!amount)return false;
+ const quantity=Number(amount[1].replace(",","."));
+ const mins=Math.round(quantity*(/^(min|minuto)/.test(amount[2])?1:60));
+ if(!Number.isFinite(mins)||mins<=0||mins>720){answer("La cantidad de horas extra no es válida.");return true;}
+ const yearMatch=q.match(/\b20\d{2}\b/);
+ const year=yearMatch?Number(yearMatch[0]):new Date().getFullYear();
+ const changes=[],skipped=[];
+ const days=new Date(year,monthIndex+1,0).getDate();
+ for(let d=1;d<=days;d++){
+  const date=new Date(year,monthIndex,d,12),key=iso(date);
+  if(date.getDay()===0||date.getDay()===6){skipped.push(key);continue;}
+  const record=bridge.get(key);
+  if(record.kind!=="work"){skipped.push(key);continue;}
+  const current=Number(record.extraMins)||0;
+  if(current+mins>1440){skipped.push(key);continue;}
+  changes.push({date:key,record:{...record,extraMins:current+mins},before:current});
+ }
+ if(!changes.length){answer("No hay jornadas laborables aptas para esta orden. No he modificado nada.");return true;}
+ proposal={changes,what:"Añadir "+mins+" minutos extra a "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
+ answer("Propuesta: "+proposal.what+". Total a añadir: "+(mins*changes.length/60)+" horas. Se omiten "+skipped.length+" días (descansos, ausencias o límites). Se SUMARÁ a las horas existentes; repetir la orden las duplicaría. ¿Confirmas?");
+ el("mj-ai-confirm").classList.add("visible");
+ return true;
+}
 function onCommand(q){
  const s=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
  proposal=null;el("mj-ai-confirm").classList.remove("visible");
+ if(bulkExtraCommand(s))return;
  const day=dateByWords(s),key=iso(day),e=bridge.get(key);
  if(/(cuant|total).*(debo|deuda|pendientes|extra)/.test(s)||/horas que debo/.test(s)){
   const snap=bridge.read(),isExtra=/extra/.test(s),now=new Date(),month=now.getMonth(),year=now.getFullYear();
@@ -111,7 +142,7 @@ window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page===
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
 el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
-el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");};
+el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
 el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
 el("mj-ai-voice").checked=voiceEnabled;
