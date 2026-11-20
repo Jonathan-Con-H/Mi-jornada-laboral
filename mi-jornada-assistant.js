@@ -45,12 +45,21 @@ function dateByWords(q){
  return d;
 }
 function human(d){return d.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});}
+function parseExtraMinutes(q){
+ const m=String(q||"").match(/\b(\d+(?:[.,]\d+)?|un(?:a|o)?|media|medio|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s*(horas?|h|minutos?|min)\b/);
+ if(!m)return null;
+ const words={un:1,una:1,uno:1,media:.5,medio:.5,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};
+ const amount=/^\d/.test(m[1])?Number(m[1].replace(",",".")):words[m[1]];
+ const minutes=/^(min|minuto)/.test(m[2])?amount:amount*60;
+ return Number.isFinite(minutes)?Math.round(minutes):null;
+}
+function formatExtraMinutes(value){return Math.floor(value/60)+" h "+(value%60)+" min";}
 let geminiBusy = false;
 
 function applyGeminiIntent(intent){
  const allowed=["add_extra","set_extra","remove_extra","set_shift","set_vacation"];
  if(!intent||!allowed.includes(intent.action))return false;
- const datePattern=/^20\\d{2}-(0[1-9]|1[0-2])-([0-2]\\d|3[01])$/;
+ const datePattern=/^20\d{2}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
  const validDate=key=>{if(typeof key!=="string"||!datePattern.test(key))return false;const d=new Date(key+"T12:00:00");return iso(d)===key;};
  const changes=[];
  if(intent.scope==="worked_days_month"){
@@ -120,19 +129,18 @@ function askWithGemini(q) {
 // Órdenes masivas deterministas: Gemini no puede escribir registros directamente.
 function bulkExtraCommand(q) {
  const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
- if(!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
- const amount=q.match(/(\d+(?:[.,]\d+)?)\s*(horas?|h|minutos?|min)\s*(?:de\s*)?(?:extra|extras)?/);
+ const dailyScope=/\b(?:cada\s+(?:(?:uno|una)\s+)?(?:de\s+los\s+)?|todos?\s+(?:los\s+)?|todas\s+(?:las\s+)?)(?:dias?|jornadas?|turnos?)\b|\bpor\s+(?:cada\s+)?(?:dia|jornada)\b|\bdiariamente\b/.test(q);
+ if(!dailyScope||!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
  let monthIndex=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
  const relative=/mes que viene|proximo mes|mes siguiente/.test(q);
  if(monthIndex<0&&!relative)return false;
- if(!amount){answer("Indica la cantidad de horas extra.");return true;}
+ const mins=parseExtraMinutes(q);
+ if(mins===null){answer("Dime cuántas horas o minutos extra quieres añadir a cada jornada.");return true;}
+ if(mins<=0||mins>720){answer("La cantidad de horas extra no es válida. El límite por jornada es 12 horas.");return true;}
  const today=new Date();
  if(monthIndex<0)monthIndex=(today.getMonth()+1)%12;
- const quantity=Number(amount[1].replace(",","."));
- const mins=Math.round(quantity*(/^(min|minuto)/.test(amount[2])?1:60));
- if(!Number.isFinite(mins)||mins<=0||mins>720){answer("La cantidad de horas extra no es válida.");return true;}
  const yearMatch=q.match(/\b20\d{2}\b/);
- const year=yearMatch?Number(yearMatch[0]):(relative&&monthIndex<today.getMonth()?today.getFullYear()+1:today.getFullYear());
+ const year=yearMatch?Number(yearMatch[0]):(monthIndex<today.getMonth()?today.getFullYear()+1:today.getFullYear());
  const changes=[],skipped=[];
  const setInstead=/establece|fija|deja en|pon a/.test(q);
  const days=new Date(year,monthIndex+1,0).getDate();
@@ -147,15 +155,16 @@ function bulkExtraCommand(q) {
   changes.push({date:key,record:{...record,extraMins:next},before:current});
  }
  if(!changes.length){answer("No hay jornadas laborables aptas para esta orden. No he modificado nada.");return true;}
- proposal={changes,what:"Añadir "+mins+" minutos extra a "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
- answer("Propuesta: "+proposal.what+". Variación total: "+(changes.reduce((a,c)=>a+c.record.extraMins-c.before,0)/60)+" horas. Se omiten "+skipped.length+" días (descansos, ausencias o límites). Se SUMARÁ a las horas existentes; repetir la orden las duplicaría. ¿Confirmas?");
+ const added=changes.reduce((a,c)=>a+c.record.extraMins-c.before,0);
+ proposal={changes,what:(setInstead?"Establecer":"Añadir")+" "+formatExtraMinutes(mins)+" extra en "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
+ const detail=changes.map(c=>c.date+": "+formatExtraMinutes(c.before)+" → "+formatExtraMinutes(c.record.extraMins)).join("; ");
+ answer("Propuesta sin guardar: "+proposal.what+". Cambio total: "+formatExtraMinutes(added)+". Días y valores: "+detail+". Se omiten "+skipped.length+" días (descansos, ausencias o límites). Repetir «añadir» sumaría otra vez. Pulsa «Confirmar cambio» para guardar o «Cancelar».");
  el("mj-ai-confirm").classList.add("visible");
  return true;
 }
-
 function editDayCommand(q){
  if(!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina)/.test(q))return false;
- const m=q.match(/\\b(\\d{1,2})[\\/-](\\d{1,2})(?:[\\/-](\\d{4}))?\\b/);
+ const m=q.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{4}))?\b/);
  if(!m)return false;
  const y=m[3]?Number(m[3]):new Date().getFullYear(),mo=Number(m[2]),d=Number(m[1]);
  const date=new Date(y,mo-1,d,12);
@@ -164,7 +173,7 @@ function editDayCommand(q){
  let record,what;
  if(/vacaciones/.test(q)){record={...before,kind:"vacation",extraMins:0,auto:false};what="Marcar vacaciones el "+key;}
  else if(/turno/.test(q)){
-  const shift=/\\btarde\\b/.test(q)?"afternoon":/\\bmanana\\b/.test(q)?"morning":null;
+  const shift=/\btarde\b/.test(q)?"afternoon":/\bmanana\b/.test(q)?"morning":null;
   if(!shift){answer("Indica turno de mañana o de tarde.");return true;}
   record={...before,kind:"work",shift,start:shift==="morning"?"06:00":"14:00",end:shift==="morning"?"14:00":"22:00",auto:false};
   what="Cambiar turno el "+key+" a "+(shift==="morning"?"mañana":"tarde");
@@ -190,12 +199,13 @@ function onCommand(q){
   }
   answer("Este mes llevas "+Math.floor(total/60)+" horas y "+(total%60)+" minutos "+(isExtra?"extra registrados.":"que debes por descansos en las jornadas registradas."));return;
  }
- const match=s.match(/(\d+(?:[.,]\d+)?)\s*(hora|horas|h)\s*(extra|extras)/);
- if(match&&/(anad|apunt|pon|registr|sum)/.test(s)){
-  const extra=Math.round(Number(match[1].replace(",","."))*60);
+ const extra=parseExtraMinutes(s);
+ if(extra!==null&&/(anad|apunt|pon|registr|sum)/.test(s)){
+  const extraMinutes=extra;
   if(e.kind!=="work"){answer("Ese día figura como descanso. Primero debes registrarlo como día trabajado.");return;}
-  if(!(extra>0&&extra<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
-  proposal={date:key,before:e,record:{...e,extraMins:(Number(e.extraMins)||0)+extra},what:"Añadir "+(extra/60)+" h extra el "+human(day)};
+  if(!(extraMinutes>0&&extraMinutes<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
+  const nextExtra=(Number(e.extraMins)||0)+extraMinutes;
+  proposal={date:key,before:e,record:{...e,extraMins:nextExtra},what:"Añadir "+formatExtraMinutes(extraMinutes)+" extra el "+human(day)};
   answer("Voy a "+proposal.what.toLowerCase()+". ¿Confirmas? No lo guardaré hasta que pulses «Confirmar cambio».");
   el("mj-ai-confirm").classList.add("visible");return;
  }
