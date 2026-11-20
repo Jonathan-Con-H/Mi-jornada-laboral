@@ -59,7 +59,7 @@ test("una fecha escrita como '10 de diciembre' modifica solo ese día tras confi
  const h=harness();
  h.submit("Añade una hora extra el 10 de diciembre de 2026");
  assert.equal(h.updates.length,0);
- assert.match(h.elements.get("mj-ai-chat").children.at(-1).textContent,/2026-12-10/);
+ assert.match(h.elements.get("mj-ai-chat").children.at(-1).textContent,/10 de diciembre/);
  h.elements.get("mj-ai-yes").onclick();
  assert.deepEqual(h.updates,["2026-12-10"]);
  assert.equal(h.records.get("2026-12-10").extraMins,60);
