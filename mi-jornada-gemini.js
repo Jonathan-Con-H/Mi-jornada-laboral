@@ -4,6 +4,12 @@
 (function () {
   "use strict";
   const SDK = "13.2.0";
+  // Capturar la URL del script mientras document.currentScript sigue disponible.
+  // En WebViews el documento puede ser about:blank y no sirve como base para import().
+  const GEMINI_SCRIPT_URL = document.currentScript && document.currentScript.src;
+  const CONFIG_MODULE_URL = GEMINI_SCRIPT_URL
+    ? new URL("./firebase-web-config.js?v=2", GEMINI_SCRIPT_URL).href
+    : new URL("./firebase-web-config.js?v=2", document.baseURI).href;
   const RESPONSE_TIMEOUT_MS = 90000;
   const CONSENT_KEY = "miJornada.gemini.compartirContexto.v1";
   let model = null, appCheck = null, loading = null;
@@ -94,7 +100,7 @@
     if (model) return model;
     if (loading) return loading;
     loading = (async () => {
-      const config = (await import("./firebase-web-config.js?v=2")).default;
+      const config = (await import(CONFIG_MODULE_URL)).default;
       if (!config.appCheckSiteKey) {
         throw new Error("Falta registrar Mi Jornada Web en Firebase App Check y añadir su clave pública de reCAPTCHA Enterprise. Tus consultas básicas siguen funcionando.");
       }
