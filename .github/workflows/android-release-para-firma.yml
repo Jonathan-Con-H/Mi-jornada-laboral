@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/android-release-para-firma.yml
       - tests/documentos.test.cjs
+      - tests/android.test.js
       - app/build.gradle
       - app/src/main/java/es/mijornada/app/MainActivity.java
       - app/src/main/assets/index.html
