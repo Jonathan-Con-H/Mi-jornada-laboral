@@ -11,8 +11,8 @@ android {
         applicationId 'es.mijornada.app'
         minSdk 24
         targetSdk 28
-        versionCode 16
-        versionName '2.5'
+        versionCode 18
+        versionName '2.7'
     }
 
     lint {
@@ -26,4 +26,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.webkit:webkit:1.18.0'
 }

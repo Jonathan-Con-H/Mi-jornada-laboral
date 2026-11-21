@@ -9,9 +9,12 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.webkit.WebViewAssetLoader;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -33,6 +36,7 @@ public class MainActivity extends Activity {
     public static volatile boolean isVisible = false;
     private long observedBackgroundSync = 0L;
     private WebView webView;
+    private WebViewAssetLoader webViewAssetLoader;
     private ValueCallback<Uri[]> fileCallback;
     private DocumentStore documentStore;
     private String pendingBackupJson = null;
@@ -54,7 +58,7 @@ public class MainActivity extends Activity {
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        settings.setAllowFileAccess(true);
+        settings.setAllowFileAccess(false);
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
@@ -63,13 +67,18 @@ public class MainActivity extends Activity {
         documentStore = new DocumentStore(this, webView);
         webView.addJavascriptInterface(documentStore, "AndroidDocuments");
 
+        webViewAssetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return webViewAssetLoader.shouldInterceptRequest(request.getUrl());
+            }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if ("file".equalsIgnoreCase(uri.getScheme())
-                        && uri.getPath() != null
-                        && uri.getPath().startsWith("/android_asset/")) return false;
+                if ("appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())) return false;
                 String scheme = uri.getScheme();
                 if ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme)) {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
@@ -95,7 +104,7 @@ public class MainActivity extends Activity {
         });
 
         setContentView(webView);
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
     }
 
     private boolean signedInAs(String uid) {

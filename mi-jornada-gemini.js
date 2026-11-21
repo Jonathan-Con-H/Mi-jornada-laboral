@@ -4,6 +4,12 @@
 (function () {
   "use strict";
   const SDK = "13.2.0";
+  // Capturar la URL del script mientras document.currentScript sigue disponible.
+  // En WebViews el documento puede ser about:blank y no sirve como base para import().
+  const GEMINI_SCRIPT_URL = document.currentScript && document.currentScript.src;
+  const CONFIG_MODULE_URL = GEMINI_SCRIPT_URL
+    ? new URL("./firebase-web-config.js?v=2", GEMINI_SCRIPT_URL).href
+    : new URL("./firebase-web-config.js?v=2", document.baseURI).href;
   const RESPONSE_TIMEOUT_MS = 90000;
   const CONSENT_KEY = "miJornada.gemini.compartirContexto.v1";
   let model = null, appCheck = null, loading = null;
@@ -94,7 +100,7 @@
     if (model) return model;
     if (loading) return loading;
     loading = (async () => {
-      const config = (await import("./firebase-web-config.js?v=2")).default;
+      const config = (await import(CONFIG_MODULE_URL)).default;
       if (!config.appCheckSiteKey) {
         throw new Error("Falta registrar Mi Jornada Web en Firebase App Check y añadir su clave pública de reCAPTCHA Enterprise. Tus consultas básicas siguen funcionando.");
       }
@@ -156,5 +162,31 @@
     if (!answer) throw new Error("Gemini no devolvió texto. Inténtalo de nuevo.");
     return answer;
   }
-  window.miJornadaGemini = { ask };
+
+  // Gemini interpreta intenciones; nunca recibe una función de escritura.
+  async function interpret(question, messages, onStatus) {
+    if(typeof question!=="string"||question.length>2500)throw Error("Orden demasiado larga.");
+    const generativeModel=await withTimeout(getModel(),25000,"No se pudo conectar con Gemini.");
+    if(localStorage.getItem(CONSENT_KEY)!=="si"){
+      const allowed=confirm("Gemini recibirá tu orden y un resumen limitado de turnos para interpretarla. No podrá guardar registros. ¿Autorizas el envío?");
+      if(!allowed)throw Error("Envío a Gemini cancelado.");
+      localStorage.setItem(CONSENT_KEY,"si");
+    }
+    const recent=(Array.isArray(messages)?messages:[]).slice(-4).map(m=>String(m.role)+": "+String(m.text||"").slice(0,250)).join("\\n");
+    const prompt=[
+      "Clasifica la orden del usuario para Mi Jornada. Responde SOLO con un objeto JSON válido, sin markdown.",
+      "Esquema: {\\\"action\\\":\\\"add_extra|set_extra|remove_extra|set_shift|set_vacation|unknown\\\",\\\"date\\\":\\\"YYYY-MM-DD o null\\\",\\\"month\\\":1-12 o null,\\\"year\\\":año o null,\\\"minutes\\\":entero o null,\\\"shift\\\":\\\"morning|afternoon\\\" o null,\\\"scope\\\":\\\"day|worked_days_month\\\"}.",
+      "Interpreta fechas según hoy="+localDate(new Date())+". Usa worked_days_month solo si el usuario dice todos/cada día trabajado de un mes.",
+      "No inventes datos ni infieras un mes entero si no está indicado. Para peticiones ambiguas devuelve action unknown.",
+      "No ejecutes acciones ni afirmes que se guardó nada.",
+      "Conversación reciente: "+recent,
+      "Orden: "+question
+    ].join("\\n");
+    const result=await generateWithRetry(generativeModel,prompt,onStatus);
+    const raw=result.response.text().trim().replace(/^\\x60{3}(?:json)?\\s*/i,"").replace(/\\s*\\x60{3}$/,"");
+    let value;try{value=JSON.parse(raw);}catch(_){throw Error("Gemini no devolvió una operación interpretable.");}
+    if(!value||typeof value!=="object"||Array.isArray(value))throw Error("Operación inválida.");
+    return value;
+  }
+  window.miJornadaGemini = { ask, interpret };
 })();
