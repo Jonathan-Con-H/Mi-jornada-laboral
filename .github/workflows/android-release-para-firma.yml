@@ -1,11 +1,13 @@
 name: Mi Jornada - compilar APK release para firma privada
 on:
   push:
-    branches: [main]
+    branches: [main, fix/gemini-config-import]
     paths:
       - .github/workflows/android-release-para-firma.yml
       - tests/documentos.test.cjs
       - app/build.gradle
+      - app/src/main/java/es/mijornada/app/MainActivity.java
+      - app/src/main/assets/index.html
   workflow_dispatch:
 permissions:
   contents: read
