@@ -175,8 +175,8 @@
     const recent=(Array.isArray(messages)?messages:[]).slice(-4).map(m=>String(m.role)+": "+String(m.text||"").slice(0,250)).join("\\n");
     const prompt=[
       "Clasifica la orden del usuario para Mi Jornada. Responde SOLO con un objeto JSON válido, sin markdown.",
-      "Esquema: {\\\"action\\\":\\\"add_extra|set_extra|remove_extra|set_shift|set_vacation|unknown\\\",\\\"date\\\":\\\"YYYY-MM-DD o null\\\",\\\"month\\\":1-12 o null,\\\"year\\\":año o null,\\\"minutes\\\":entero o null,\\\"shift\\\":\\\"morning|afternoon\\\" o null,\\\"scope\\\":\\\"day|worked_days_month\\\"}.",
-      "Interpreta fechas según hoy="+localDate(new Date())+". Usa worked_days_month solo si el usuario dice todos/cada día trabajado de un mes.",
+      "Esquema: {\\\"action\\\":\\\"add_extra|set_extra|remove_extra|set_shift|set_vacation|unknown\\\",\\\"date\\\":\\\"YYYY-MM-DD o null\\\",\\\"startDate\\\":\\\"YYYY-MM-DD o null\\\",\\\"endDate\\\":\\\"YYYY-MM-DD o null\\\",\\\"month\\\":1-12 o null,\\\"year\\\":año o null,\\\"minutes\\\":entero o null,\\\"shift\\\":\\\"morning|afternoon\\\" o null,\\\"scope\\\":\\\"day|worked_days_month|date_range\\\"}.",
+      "Interpreta fechas según hoy="+localDate(new Date())+". Para un intervalo devuelve date_range y fechas inclusivas startDate/endDate; para el fin de año usa el 31 de diciembre del año local indicado. Si falta la cantidad, la acción o una fecha necesaria, devuelve action unknown. No conviertas un día aislado en un mes.",
       "No inventes datos ni infieras un mes entero si no está indicado. Para peticiones ambiguas devuelve action unknown.",
       "No ejecutes acciones ni afirmes que se guardó nada.",
       "Conversación reciente: "+recent,

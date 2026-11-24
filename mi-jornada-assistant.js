@@ -56,49 +56,60 @@ function parseExtraMinutes(q){
 function formatExtraMinutes(value){return Math.floor(value/60)+" h "+(value%60)+" min";}
 let geminiBusy = false;
 
-function applyGeminiIntent(intent){
+function kindLabel(record){
+ const kinds={work:"trabajo",rest:"descanso",vacation:"vacaciones",sick:"baja",paid_leave:"permiso retribuido",justified:"ausencia justificada"};
+ return (kinds[record.kind]||record.kind)+ (record.kind==="work"?", extra "+formatExtraMinutes(Number(record.extraMins)||0):"");
+}
+function intentChanges(intent){
  const allowed=["add_extra","set_extra","remove_extra","set_shift","set_vacation"];
- if(!intent||!allowed.includes(intent.action))return false;
- const datePattern=/^20\d{2}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
- const validDate=key=>{if(typeof key!=="string"||!datePattern.test(key))return false;const d=new Date(key+"T12:00:00");return iso(d)===key;};
- const changes=[];
+ if(!intent||!allowed.includes(intent.action))return null;
+ const validDate=key=>{if(typeof key!=="string"||!/^20\d{2}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(key))return false;const d=new Date(key+"T12:00:00");return iso(d)===key;};
+ let start,end;
  if(intent.scope==="worked_days_month"){
-  if(!["add_extra","set_extra","remove_extra"].includes(intent.action))throw Error("Operación mensual no permitida.");
   const month=Number(intent.month),year=Number(intent.year);
-  if(!Number.isInteger(month)||month<1||month>12||!Number.isInteger(year)||year<2020||year>2100)throw Error("Mes o año no válido.");
-  for(let day=1;day<=new Date(year,month,0).getDate();day++){
-   const key=iso(new Date(year,month-1,day,12)),d=new Date(key+"T12:00:00");
-   if(d.getDay()===0||d.getDay()===6)continue;
-   const before=bridge.get(key);
-   if(before.kind!=="work")continue;
-   changes.push({date:key,before,record:null});
-  }
- }else if(intent.scope==="day"&&validDate(intent.date)){
-  const before=bridge.get(intent.date);
-  changes.push({date:intent.date,before,record:null});
- }else throw Error("Indica una fecha concreta o un mes completo de días trabajados.");
- if(changes.length>31)throw Error("Demasiados días para una sola operación.");
+  if(!Number.isInteger(month)||month<1||month>12||!Number.isInteger(year)||year<2020||year>2100)throw Error("Dime el mes y el año completos.");
+  start=iso(new Date(year,month-1,1,12));end=iso(new Date(year,month,0,12));
+ }else if(intent.scope==="day"&&validDate(intent.date)){start=end=intent.date;
+ }else if(intent.scope==="date_range"&&validDate(intent.startDate)&&validDate(intent.endDate)&&intent.startDate<=intent.endDate){start=intent.startDate;end=intent.endDate;
+ }else throw Error("No he podido concretar las fechas. Indícame el día o el intervalo completo.");
+ const first=new Date(start+"T12:00:00"),last=new Date(end+"T12:00:00");
+ const span=Math.round((last-first)/86400000)+1;
+ if(span>366)throw Error("El intervalo máximo para una sola orden es de un año.");
  const minutes=Number(intent.minutes);
- if(["add_extra","set_extra"].includes(intent.action)&&(!Number.isInteger(minutes)||minutes<1||minutes>720))throw Error("Indica entre 1 y 720 minutos extra.");
- if(intent.action==="set_shift"&&!["morning","afternoon"].includes(intent.shift))throw Error("Turno no válido.");
- for(const change of changes){
-  const e=change.before;
-  if(["add_extra","set_extra"].includes(intent.action)&&e.kind!=="work")throw Error("El "+change.date+" no está marcado como trabajado.");
-  if(intent.action==="add_extra")change.record={...e,extraMins:(Number(e.extraMins)||0)+minutes};
-  if(intent.action==="set_extra")change.record={...e,extraMins:minutes};
-  if(intent.action==="remove_extra")change.record={...e,extraMins:0};
-  if(intent.action==="set_shift"){
-   const morning=intent.shift==="morning";
-   change.record={...e,kind:"work",shift:intent.shift,start:morning?"06:00":"14:00",end:morning?"14:00":"22:00",auto:false};
-  }
-  if(intent.action==="set_vacation")change.record={...e,kind:"vacation",extraMins:0,auto:false};
-  if(!Number.isFinite(Number(change.record.extraMins))||Number(change.record.extraMins)>1440)throw Error("Límite de horas extra excedido.");
+ if(["add_extra","set_extra"].includes(intent.action)&&(!Number.isInteger(minutes)||minutes<1||minutes>720))throw Error("Dime una cantidad entre 1 minuto y 12 horas.");
+ if(intent.action==="set_shift"&&!['morning','afternoon'].includes(intent.shift))throw Error("Indica turno de mañana o de tarde.");
+ const opId=[intent.action,start,end,minutes||0,intent.shift||""].join("|");
+ const changes=[],skipped=[];
+ for(let i=0;i<span;i++){
+  const date=new Date(first);date.setDate(date.getDate()+i);const key=iso(date),before=bridge.get(key);
+  if(["add_extra","set_extra","remove_extra"].includes(intent.action)&&before.kind!=="work"){skipped.push(key);continue;}
+  const markers=Array.isArray(before._assistantOperationIds)?before._assistantOperationIds:[];
+  if(intent.action==="add_extra"&&markers.includes(opId)){skipped.push(key);continue;}
+  let record={...before};
+  if(intent.action==="add_extra")record.extraMins=(Number(before.extraMins)||0)+minutes;
+  if(intent.action==="set_extra")record.extraMins=minutes;
+  if(intent.action==="remove_extra")record.extraMins=0;
+  if(intent.action==="set_shift")Object.assign(record,{kind:"work",shift:intent.shift,start:intent.shift==="morning"?"06:00":"14:00",end:intent.shift==="morning"?"14:00":"22:00",auto:false});
+  if(intent.action==="set_vacation")Object.assign(record,{kind:"vacation",extraMins:0,auto:false});
+  if(!Number.isFinite(Number(record.extraMins))||Number(record.extraMins)>1440)throw Error("El límite de horas extra se superaría el "+key+". No se ha cambiado ningún día.");
+  if(intent.action==="add_extra")record._assistantOperationIds=[...markers,opId].slice(-40);
+  changes.push({date:key,before,record});
  }
- if(!changes.length){answer("No hay días trabajados que cumplan la orden. No he cambiado nada.");return true;}
- const what=intent.action+" en "+changes.length+" día(s): "+changes.map(c=>c.date).join(", ");
- proposal={changes:changes.map(c=>({...c,beforeExtra:Number(c.before.extraMins)||0})),what};
- answer("Gemini ha interpretado esta propuesta (sin guardar): "+what+". Pulsa «Confirmar cambio» para aplicarla o «Cancelar» para descartarla.");
- el("mj-ai-confirm").classList.add("visible");return true;
+ if(!changes.length)return {changes:[],skipped,opId,start,end};
+ const what={add_extra:"Añadir "+formatExtraMinutes(minutes)+" por jornada",set_extra:"Dejar las horas extra en "+formatExtraMinutes(minutes),remove_extra:"Quitar las horas extra",set_shift:"Cambiar al turno de "+(intent.shift==="morning"?"mañana":"tarde"),set_vacation:"Marcar vacaciones"}[intent.action];
+ return {changes,skipped,opId,start,end,what};
+}
+function showProposal(plan){
+ if(!plan.changes.length){answer("No hay cambios nuevos. La orden ya se aplicó a esas jornadas o no hay días que cumplan el criterio. No he guardado nada.");return;}
+ const totalAdded=plan.changes.reduce((sum,c)=>sum+(Number(c.record.extraMins)||0)-(Number(c.before.extraMins)||0),0);
+ const detail=plan.changes.map(c=>c.date+": "+kindLabel(c.before)+" → "+kindLabel(c.record)).join("\n");
+ proposal={changes:plan.changes,what:plan.what||"Actualizar registros",opId:plan.opId};
+ answer("Vista previa sin guardar: "+proposal.what+" del "+plan.start+" al "+plan.end+".\n"+detail+(totalAdded?"\nTotal que se añade: "+formatExtraMinutes(totalAdded)+".":"")+(plan.skipped.length?"\nSe omiten "+plan.skipped.length+" días (descanso, ausencia o repetición de la misma orden).":"")+"\nConfirma para aplicar todo el lote o cancela.");
+ el("mj-ai-confirm").classList.add("visible");
+}
+function applyGeminiIntent(intent){
+ if(!intent||intent.action==="unknown")return false;
+ showProposal(intentChanges(intent));return true;
 }
 function askWithGemini(q) {
   if (!window.miJornadaGemini) {
@@ -127,40 +138,51 @@ function askWithGemini(q) {
 }
 
 // Órdenes masivas deterministas: Gemini no puede escribir registros directamente.
-function bulkExtraCommand(q) {
+function resolveRange(q){
+ const today=new Date();today.setHours(12,0,0,0);
+ const nextMonth=new Date(today.getFullYear(),today.getMonth()+1,1,12);
+ let start=null,end=null;
+ const isoMatch=q.match(/desde\s+(?:el\s+)?(\d{1,2})[/-](\d{1,2})(?:[/-](20\d{2}))?/);
+ const namedMatch=q.match(/desde\s+(?:el\s+)?(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s+de\s+(20\d{2}))?/);
  const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
- const dailyScope=/\b(?:cada\s+(?:(?:uno|una)\s+)?(?:de\s+los\s+)?|todos?\s+(?:los\s+)?|todas\s+(?:las\s+)?)(?:dias?|jornadas?|turnos?)\b|\bpor\s+(?:cada\s+)?(?:dia|jornada)\b|\bdiariamente\b/.test(q);
- if(!dailyScope||!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
- let monthIndex=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
- const relative=/mes que viene|proximo mes|mes siguiente/.test(q);
- if(monthIndex<0&&!relative)return false;
- const mins=parseExtraMinutes(q);
- if(mins===null){answer("Dime cuántas horas o minutos extra quieres añadir a cada jornada.");return true;}
- if(mins<=0||mins>720){answer("La cantidad de horas extra no es válida. El límite por jornada es 12 horas.");return true;}
- const today=new Date();
- if(monthIndex<0)monthIndex=(today.getMonth()+1)%12;
- const yearMatch=q.match(/\b20\d{2}\b/);
- const year=yearMatch?Number(yearMatch[0]):(monthIndex<today.getMonth()?today.getFullYear()+1:today.getFullYear());
- const changes=[],skipped=[];
- const setInstead=/establece|fija|deja en|pon a/.test(q);
- const days=new Date(year,monthIndex+1,0).getDate();
- for(let d=1;d<=days;d++){
-  const date=new Date(year,monthIndex,d,12),key=iso(date);
-  if(date.getDay()===0||date.getDay()===6){skipped.push(key);continue;}
-  const record=bridge.get(key);
-  if(record.kind!=="work"){skipped.push(key);continue;}
-  const current=Number(record.extraMins)||0;
-  const next=setInstead?mins:current+mins;
-  if(next>1440){skipped.push(key);continue;}
-  changes.push({date:key,before:record,beforeExtra:current,record:{...record,extraMins:next}});
+ if(isoMatch||namedMatch){const m=isoMatch?Number(isoMatch[2]):months.indexOf(namedMatch[2])+1,d=isoMatch?Number(isoMatch[1]):Number(namedMatch[1]),y=Number((isoMatch&&isoMatch[3])||(namedMatch&&namedMatch[3])||today.getFullYear());start=new Date(y,m-1,d,12);if(start.getFullYear()!==y||start.getMonth()!==m-1||start.getDate()!==d)return {invalid:true};}
+ else if(/primer\s+martes\s+del\s+mes\s+que\s+viene/.test(q)){
+  start=new Date(nextMonth);while(start.getDay()!==2)start.setDate(start.getDate()+1);
  }
- if(!changes.length){answer("No hay jornadas laborables aptas para esta orden. No he modificado nada.");return true;}
- const added=changes.reduce((a,c)=>a+c.record.extraMins-c.beforeExtra,0);
- proposal={changes,what:(setInstead?"Establecer":"Añadir")+" "+formatExtraMinutes(mins)+" extra en "+changes.length+" jornadas de "+months[monthIndex]+" de "+year};
- const detail=changes.map(c=>c.date+": "+formatExtraMinutes(c.beforeExtra)+" → "+formatExtraMinutes(c.record.extraMins)).join("; ");
- answer("Propuesta sin guardar: "+proposal.what+". Cambio total: "+formatExtraMinutes(added)+". Días y valores: "+detail+". Se omiten "+skipped.length+" días (descansos, ausencias o límites). Repetir «añadir» sumaría otra vez. Pulsa «Confirmar cambio» para guardar o «Cancelar».");
- el("mj-ai-confirm").classList.add("visible");
- return true;
+ else if(/martes\s+del\s+mes\s+que\s+viene/.test(q)){
+  return {needsClarification:true,question:"Hay varios martes el mes que viene. ¿Te refieres al primero ("+iso(new Date(nextMonth.getFullYear(),nextMonth.getMonth(),1+((2-nextMonth.getDay()+7)%7),12))+"), o a otro martes?"};
+ }
+ if(/fin\s+de\s+ano|final\s+de\s+ano|hasta\s+diciembre|fin\s+del\s+ano/.test(q))end=new Date(today.getFullYear(),11,31,12);
+ else if(/fin\s+de\s+mes|hasta\s+fin\s+de\s+mes/.test(q))end=new Date(today.getFullYear(),today.getMonth()+1,0,12);
+ const both=(q.match(/desde\b/g)||[]).length&&(/\bhasta\b/.test(q)||/\bal\s+fin\b/.test(q));
+ if(start&&end&&start<=end&&both)return {start:iso(start),end:iso(end)};
+ return null;
+}
+function bulkExtraCommand(q) {
+ const dailyScope=/\b(?:cada\s+(?:(?:uno|una)\s+)?(?:de\s+los\s+)?|todos?\s+(?:los\s+)?|todas\s+(?:las\s+)?)(?:dias?|jornadas?|turnos?)\b|\bpor\s+(?:cada\s+)?(?:dia|jornada)\b|\bdiariamente\b|\bcada\s+jornada\s+trabajada\b/.test(q);
+ if(!dailyScope||!/(anad|agreg|apunt|pon|registr|sum)/.test(q)||!/(extra|extras)/.test(q))return false;
+ const minutes=parseExtraMinutes(q);
+ if(minutes===null){answer("¿Cuántas horas o minutos extra quieres añadir a cada jornada?");return true;}
+ if(minutes<=0||minutes>720){answer("La cantidad no es válida. El límite por jornada es 12 horas.");return true;}
+ const range=resolveRange(q);
+ if(range&&range.needsClarification){answer(range.question+" No he preparado ni guardado cambios.");return true;}
+ if(range&&range.invalid){answer("La fecha indicada no existe. No he cambiado nada.");return true;}
+ const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+ let start,end;
+ if(range){start=range.start;end=range.end;}
+ else {
+  let month=months.findIndex(m=>new RegExp("\\b"+m+"\\b").test(q));
+  const relative=/mes\s+que\s+viene|proximo\s+mes|mes\s+siguiente/.test(q);
+  if(month<0&&!relative)return false;
+  const now=new Date();if(month<0)month=(now.getMonth()+1)%12;
+  const yearMatch=q.match(/\b20\d{2}\b/),year=Number(yearMatch?yearMatch[0]:(month<now.getMonth()?now.getFullYear()+1:now.getFullYear()));
+  start=iso(new Date(year,month,1,12));end=iso(new Date(year,month+1,0,12));
+ }
+ if(start>end){answer("El final del intervalo es anterior al inicio. No he cambiado nada.");return true;}
+ const plan=intentChanges({action:"add_extra",scope:"date_range",startDate:start,endDate:end,minutes});
+ if(!plan.changes.length){answer("No hay jornadas trabajadas nuevas para esta orden. No he guardado nada.");return true;}
+ plan.what="Añadir "+formatExtraMinutes(minutes)+" a cada jornada trabajada";
+ showProposal(plan);return true;
 }
 function editDayCommand(q){
  if(!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina|anad|agreg|apunt|sum)/.test(q))return false;
@@ -188,8 +210,8 @@ function editDayCommand(q){
   if(minutes===null){answer("Dime cuántas horas o minutos extra quieres añadir.");return true;}
   if(minutes<=0||minutes>720){answer("Indica entre 1 minuto y 12 horas extra.");return true;}
   if(before.kind!=="work"){answer("Ese día no está marcado como trabajado. No he cambiado nada.");return true;}
-  record={...before,extraMins:(Number(before.extraMins)||0)+minutes,auto:false};
-  what="Añadir "+formatExtraMinutes(minutes)+" extra el "+human(date);
+  const plan=intentChanges({action:"add_extra",scope:"day",date:key,minutes});
+  showProposal(plan);return true;
  }else return false;
  proposal={date:key,record,before,what};
  answer("Vista previa sin guardar: "+what+". ¿Confirmas? No guardaré nada hasta que pulses «Confirmar cambio».");
@@ -218,10 +240,9 @@ function onCommand(q){
   const extraMinutes=extra;
   if(e.kind!=="work"){answer("Ese día figura como descanso. Primero debes registrarlo como día trabajado.");return;}
   if(!(extraMinutes>0&&extraMinutes<=720)){answer("Indícame entre 1 minuto y 12 horas extra.");return;}
-  const nextExtra=(Number(e.extraMins)||0)+extraMinutes;
-  proposal={date:key,before:e,record:{...e,extraMins:nextExtra},what:"Añadir "+formatExtraMinutes(extraMinutes)+" extra el "+human(day)};
-  answer("Voy a "+proposal.what.toLowerCase()+". ¿Confirmas? No lo guardaré hasta que pulses «Confirmar cambio».");
-  el("mj-ai-confirm").classList.add("visible");return;
+  const plan=intentChanges({action:"add_extra",scope:"day",date:key,minutes:extraMinutes});
+  plan.what="Añadir "+formatExtraMinutes(extraMinutes)+" extra";
+  showProposal(plan);return;
  }
  if(/sabado.*trabaj|trabaj.*sabado/.test(s)){
   const d=dateByWords("sabado"),k=iso(d),record=bridge.get(k);
@@ -240,7 +261,7 @@ window.addEventListener("mi-jornada:open-tool",e=>{if(e.detail&&e.detail.page===
 el("mj-ai-close").onclick=close;
 el("mj-ai-full").onclick=()=>panel.classList.toggle("full");
 el("mj-ai-form").onsubmit=event=>{event.preventDefault();if(geminiBusy)return;const q=el("mj-ai-input").value.trim();if(!q)return;el("mj-ai-input").value="";bubbleMsg("user",q);onCommand(q);};
-el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;proposal=null;el("mj-ai-confirm").classList.remove("visible");if(p.changes){let done=0;try{for(const c of p.changes){if(JSON.stringify(bridge.get(c.date))!==JSON.stringify(c.beforeExtra===undefined?bridge.get(c.date):c.before))throw Error("El día "+c.date+" cambió desde la vista previa.");bridge.update(c.date,c.record);done++;}answer("Guardado: "+p.what+". Días actualizados: "+done+".");}catch(error){answer("Error al guardar: "+done+" días actualizados antes del fallo. Revisa el calendario antes de repetir la orden. "+(error.message||""));}}else{try{if(p.before&&JSON.stringify(bridge.get(p.date))!==JSON.stringify(p.before))throw Error("El registro cambió desde la vista previa.");bridge.update(p.date,p.record);answer("Guardado: "+p.what+".");}catch(error){answer("No se pudo guardar: "+(error.message||"Error desconocido"));}}};
+el("mj-ai-yes").onclick=()=>{if(!proposal)return;const p=proposal;el("mj-ai-yes").disabled=true;try{if(p.changes){for(const c of p.changes)if(JSON.stringify(bridge.get(c.date))!==JSON.stringify(c.before))throw Error("El día "+c.date+" cambió desde la vista previa. No se ha guardado ningún cambio.");if(typeof bridge.updateMany!=="function")throw Error("Esta versión no permite guardar el lote de forma segura. Actualiza la aplicación.");bridge.updateMany(p.changes.map(c=>({date:c.date,record:c.record})));}else{if(p.before&&JSON.stringify(bridge.get(p.date))!==JSON.stringify(p.before))throw Error("El registro cambió desde la vista previa. No se ha guardado ningún cambio.");bridge.update(p.date,p.record);}proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Guardado correctamente: "+p.what+".");}catch(error){answer("No se ha confirmado el guardado: "+(error.message||"error desconocido"));}finally{el("mj-ai-yes").disabled=false;}};
 el("mj-ai-no").onclick=()=>{proposal=null;el("mj-ai-confirm").classList.remove("visible");answer("Cambio cancelado. No he modificado la jornada.");};
 el("mj-ai-clear").onclick=()=>{if(!confirm("¿Borrar el historial del chat de este dispositivo?"))return;history=[];persist();el("mj-ai-chat").innerHTML="";bubbleMsg("assistant","Historial borrado. ¿Qué quieres consultar?");};
 el("mj-ai-voice").checked=voiceEnabled;
