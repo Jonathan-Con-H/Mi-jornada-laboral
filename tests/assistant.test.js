@@ -43,7 +43,7 @@ test("la orden por cada día de diciembre presenta los cambios y espera confirma
  assert.equal(h.elements.get("mj-ai-confirm").classList.contains("visible"),true);
  const preview=h.elements.get("mj-ai-chat").children.at(-1).textContent;
  assert.match(preview,/Vista previa sin guardar/);
- assert.match(preview,/2026-12-01: trabajo, extra 0 h 0 min → trabajo, extra 1 h 0 min/);
+ assert.match(preview,/2026-12-01: trabajo, turno mañana 06:00–14:00, extra 0 h 0 min, descanso 30 min, deuda 0 h 30 min → trabajo, turno mañana 06:00–14:00, extra 1 h 0 min, descanso 30 min, deuda 0 h 30 min/);
  const expected=[];
  for(let day=1;day<=31;day++){
   const key="2026-12-"+String(day).padStart(2,"0");
@@ -81,7 +81,7 @@ test("el intervalo del martes del mes que viene a fin de año muestra y guarda c
  assert.equal(h.updates.length,0);
  const preview=h.elements.get("mj-ai-chat").children.at(-1).textContent;
  assert.match(preview,/del 2026-12-01 al 2026-12-31/);
- assert.match(preview,/2026-12-01: trabajo, extra 0 h 0 min → trabajo, extra 1 h 0 min/);
+ assert.match(preview,/2026-12-01: trabajo, turno mañana 06:00–14:00, extra 0 h 0 min, descanso 30 min, deuda 0 h 30 min → trabajo, turno mañana 06:00–14:00, extra 1 h 0 min, descanso 30 min, deuda 0 h 30 min/);
  const expected=[];
  for(let day=1;day<=31;day++){
   const key="2026-12-"+String(day).padStart(2,"0");
@@ -122,4 +122,20 @@ test("si el día de inicio admite varios martes pregunta cuál antes de preparar
  assert.equal(h.elements.get("mj-ai-confirm").classList.contains("visible"),false);
  assert.match(h.elements.get("mj-ai-chat").children.at(-1).textContent,/Hay varios martes/);
  assert.match(h.elements.get("mj-ai-chat").children.at(-1).textContent,/primero \(2026-12-01\)/);
+});
+
+
+test("Gemini puede proponer un cambio de turno mensual sin convertir descansos en trabajo",async()=>{
+ const h=harness({interpret:()=>Promise.resolve({action:"set_shift",scope:"worked_days_month",month:12,year:2026,shift:"afternoon"})});
+ h.submit("Cambia las jornadas de diciembre a turno de tarde");
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.updates.length,0);
+ const preview=h.elements.get("mj-ai-chat").children.at(-1).textContent;
+ assert.match(preview,/turno mañana 06:00–14:00/);
+ assert.match(preview,/turno tarde 14:00–22:00/);
+ h.elements.get("mj-ai-yes").onclick();
+ assert.equal(h.updates.length,23);
+ assert.equal(h.records.get("2026-12-01").kind,"work");
+ assert.equal(h.records.get("2026-12-01").shift,"afternoon");
+ assert.equal(h.records.has("2026-12-05"),false);
 });

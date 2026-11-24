@@ -58,7 +58,12 @@ let geminiBusy = false;
 
 function kindLabel(record){
  const kinds={work:"trabajo",rest:"descanso",vacation:"vacaciones",sick:"baja",paid_leave:"permiso retribuido",justified:"ausencia justificada"};
- return (kinds[record.kind]||record.kind)+ (record.kind==="work"?", extra "+formatExtraMinutes(Number(record.extraMins)||0):"");
+ let label=kinds[record.kind]||record.kind;
+ if(record.kind==="work")label+=", turno "+(record.shift==="morning"?"mañana":"tarde")+" "+record.start+"–"+record.end+
+  ", extra "+formatExtraMinutes(Number(record.extraMins)||0)+", descanso "+(Number(record.breakMins)||0)+" min"+
+  ", deuda "+formatExtraMinutes(Math.round((Number(record.owed)||0)*60))+
+  (Number(record.hourlyLeaveMins)?", permiso "+formatExtraMinutes(Number(record.hourlyLeaveMins)):"");
+ return label;
 }
 function intentChanges(intent){
  const allowed=["add_extra","set_extra","remove_extra","set_shift","set_vacation"];
@@ -82,7 +87,10 @@ function intentChanges(intent){
  const changes=[],skipped=[];
  for(let i=0;i<span;i++){
   const date=new Date(first);date.setDate(date.getDate()+i);const key=iso(date),before=bridge.get(key);
-  if(["add_extra","set_extra","remove_extra"].includes(intent.action)&&before.kind!=="work"){skipped.push(key);continue;}
+  const onlyWorkedDays=intent.scope==="worked_days_month"||intent.scope==="date_range";
+  if(onlyWorkedDays&&before.kind!=="work"){skipped.push(key);continue;}
+  if(["add_extra","set_extra","remove_extra"].includes(intent.action)&&before.kind!=="work")
+   throw Error("El "+key+" no está marcado como trabajado. No se ha preparado ningún cambio.");
   const markers=Array.isArray(before._assistantOperationIds)?before._assistantOperationIds:[];
   if(intent.action==="add_extra"&&markers.includes(opId)){skipped.push(key);continue;}
   let record={...before};
@@ -104,7 +112,7 @@ function showProposal(plan){
  const totalAdded=plan.changes.reduce((sum,c)=>sum+(Number(c.record.extraMins)||0)-(Number(c.before.extraMins)||0),0);
  const detail=plan.changes.map(c=>c.date+": "+kindLabel(c.before)+" → "+kindLabel(c.record)).join("\n");
  proposal={changes:plan.changes,what:plan.what||"Actualizar registros",opId:plan.opId};
- answer("Vista previa sin guardar: "+proposal.what+" del "+plan.start+" al "+plan.end+".\n"+detail+(totalAdded?"\nTotal que se añade: "+formatExtraMinutes(totalAdded)+".":"")+(plan.skipped.length?"\nSe omiten "+plan.skipped.length+" días (descanso, ausencia o repetición de la misma orden).":"")+"\nConfirma para aplicar todo el lote o cancela.");
+ answer("Vista previa sin guardar: "+proposal.what+" del "+plan.start+" al "+plan.end+".\n"+detail+(totalAdded>0?"\nTotal que se añade: "+formatExtraMinutes(totalAdded)+".":totalAdded<0?"\nTotal que se reduce: "+formatExtraMinutes(Math.abs(totalAdded))+".":"")+(plan.skipped.length?"\nSe omiten "+plan.skipped.length+" días (descanso, ausencia o repetición de la misma orden).":"")+"\nConfirma para aplicar todo el lote o cancela.");
  el("mj-ai-confirm").classList.add("visible");
 }
 function applyGeminiIntent(intent){
@@ -250,7 +258,7 @@ function onCommand(q){
   answer("Puedo marcar el "+human(d)+" como trabajado, con el turno previsto y 30 minutos de descanso. ¿Confirmas?");
   el("mj-ai-confirm").classList.add("visible");return;
  }
- if(/turno|trabaj.*(manana|hoy|sabado|domingo)/.test(s)){
+ if(/turno|trabaj.*(manana|hoy|sabado|domingo)/.test(s)&&!/(cambia|modifica|pon|establece|fija|marca|registr|quita|elimina|anad|agreg|apunt|sum)/.test(s)){
   const turno=e.kind==="rest"?"descanso previsto":("turno de "+(e.shift==="morning"?"mañana de 06:00 a 14:00":"tarde de 14:00 a 22:00"));answer("El "+human(day)+" tienes "+turno+".");return;
  }
  askWithGemini(q);
