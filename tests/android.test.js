@@ -12,7 +12,7 @@ function harness(overrides={}) {
   const storage = new Map();
   const oldDay = "2026-11-05";
   const original = { kind:"work",shift:"morning",start:"06:00",end:"14:00",
-    breakMins:30,owed:0.5,extraMins:0,notes:"Jornada de mi primera empresa",auto:false };
+    breakMins:30,owed:0.5,extraMins:0,hourlyLeaveMins:0,notes:"Jornada de mi primera empresa",auto:false };
   storage.set("miJornada.v1", JSON.stringify({[oldDay]:original}));
   storage.set("miJornada.auto.v1", JSON.stringify({enabled:false,since:oldDay}));
   for(const [key,value] of Object.entries(overrides))storage.set(key,value);
@@ -52,6 +52,7 @@ function harness(overrides={}) {
   const localStorage = {
     getItem:key=>storage.get(key)??null,
     setItem:(key,value)=>storage.set(key,String(value)),
+    removeItem:key=>storage.delete(key),
   };
   vm.runInNewContext(script[1],{
     document:doc,window,localStorage,navigator:{},location:{protocol:"file:"},
@@ -140,7 +141,7 @@ test("una hoja cerrada ofrece recuperar acceso desde el propio calendario",()=>{
 
 test("la actualización incrementa la versión y espera a la salida del turno para registrar",()=>{
   const gradle=fs.readFileSync(path.join(__dirname,"../app/build.gradle"),"utf8");
-  assert.match(gradle,/versionCode 16/);
+  assert.match(gradle,/versionCode 18/);
   assert.match(html,/id="manualRegister"/);
   assert.match(html,/id="recoverDays"/);
   assert.match(html,/syncCompleted: function/);
@@ -182,4 +183,34 @@ test("recuperar días pendientes conserva los registros previos y los excluidos"
   assert.equal(saved[h.oldDay].notes,h.original.notes);
   assert.match(h.element("recoveryStatus").textContent,/Recuperadas/);
   assert.equal(h.window.miJornadaBridge.syncCompleted(),true);
+});
+
+
+test("updateMany valida el lote completo antes de guardar y no deja medias jornadas",()=>{
+  const h=harness();
+  const before=h.storage.get("miJornada.v1");
+  const valid={...h.original,extraMins:60};
+  const invalid={...h.original,extraMins:2000};
+  assert.throws(()=>h.window.miJornadaBridge.updateMany([
+    {date:"2026-11-09",record:valid},
+    {date:"2026-11-10",record:invalid},
+  ]),/Minutos no válidos/);
+  assert.equal(h.storage.get("miJornada.v1"),before);
+  const saved=JSON.parse(h.storage.get("miJornada.v1"));
+  assert.equal(saved["2026-11-09"],undefined);
+  assert.equal(saved[h.oldDay].notes,h.original.notes);
+});
+
+test("updateMany guarda un lote válido conservando hojas y registros existentes",()=>{
+  const h=harness();
+  const record={...h.original,extraMins:60};
+  assert.equal(h.window.miJornadaBridge.updateMany([
+    {date:"2026-11-09",record},{date:"2026-11-10",record}
+  ]),true);
+  const saved=JSON.parse(h.storage.get("miJornada.v1"));
+  assert.equal(saved["2026-11-09"].extraMins,60);
+  assert.equal(saved["2026-11-10"].extraMins,60);
+  assert.equal(saved[h.oldDay].notes,h.original.notes);
+  const sheets=JSON.parse(h.storage.get("miJornada.service.sheets.v1"));
+  assert.equal(sheets.items[0].data["2026-11-09"].extraMins,60);
 });

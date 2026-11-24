@@ -142,7 +142,7 @@
   </div>
 </section>
 <section id="backupView" class="hidden"><div class="panel"><h2 style="margin-top:0;font-size:1.1rem">Copia de seguridad</h2><p>Los datos se guardan en este navegador del móvil. Exporta un archivo JSON para conservar una copia y poder recuperarla más adelante.</p><div class="actions"><button class="primary" id="exportBtn">Exportar copia</button><label class="tab" for="importFile">Importar copia JSON</label><input class="hidden" type="file" id="importFile" accept="application/json,.json"></div><p class="notice" style="margin-top:14px">También puedes exportar un JSON como copia adicional, aunque uses la nube.</p><p class="muted" id="backupStatus"></p><h3>Papelera (30 días)</h3><div id="trashList"></div></div></section>
-<div class="foot">Mi Jornada · Android 1.5 · Los datos son personales y se guardan localmente en este navegador.</div></main>
+<div class="foot">Mi Jornada · Android 2.7 · Los datos son personales y se guardan en este dispositivo; activa Mi nube para sincronizarlos.</div></main>
 <script>
 
   "use strict";
@@ -887,6 +887,56 @@ window.miJornadaBridge = {
     delete trash[date]; delete suppressed[date];
     saveMeta(); save();
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
+  },
+
+  updateMany: function (changes) {
+    if (!Array.isArray(changes) || changes.length < 1 || changes.length > 366)
+      throw Error("El lote debe contener entre 1 y 366 registros.");
+    const seen = new Set(), prepared = [];
+    for (const item of changes) {
+      const date = item && item.date, record = item && item.record;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || iso(parse(date)) !== date ||
+          seen.has(date) || !record || typeof record !== "object" || Array.isArray(record))
+        throw Error("El lote contiene una fecha duplicada o un registro no válido.");
+      seen.add(date);
+      if (!["work","rest","vacation","sick","paid_leave","justified"].includes(record.kind))
+        throw Error("Tipo de día no válido en " + date + ".");
+      if (typeof record.notes !== "string" || record.notes.length > 3000)
+        throw Error("Apuntes no válidos en " + date + ".");
+      if (record.kind === "work") {
+        if (!["morning","afternoon"].includes(record.shift) ||
+            !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(record.start) ||
+            !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(record.end) || duration(record) <= 0)
+          throw Error("Turno u horario no válido en " + date + ".");
+        const mins = duration(record) * 60;
+        for (const [value, maximum] of [[record.breakMins, mins],[record.hourlyLeaveMins, mins],
+          [record.extraMins, 1440],[record.owed, 24]]) {
+          if (!Number.isFinite(value) || value < 0 || value > maximum)
+            throw Error("Minutos no válidos en " + date + ".");
+        }
+        if (record.breakMins + record.hourlyLeaveMins > mins)
+          throw Error("Descanso y permiso superan la jornada del " + date + ".");
+      }
+      prepared.push({date,record:{...clone(record),auto:false}});
+    }
+    const before = {data:clone(data),sheets:clone(sheetsState),trash:clone(trash),suppressed:clone(suppressed)};
+    const keys = [KEY,AUTO_KEY,TRASH_KEY,SUPPRESSED_KEY,VAC_KEY,SETTINGS_KEY,SHEETS_KEY];
+    const saved = keys.map(key=>[key,localStorage.getItem(key)]);
+    try {
+      for (const item of prepared) {
+        data[item.date] = item.record;
+        delete trash[item.date]; delete suppressed[item.date];
+      }
+      saveMeta(); save();
+    } catch (error) {
+      data=before.data;sheetsState=before.sheets;trash=before.trash;suppressed=before.suppressed;
+      for (const [key,value] of saved) {
+        try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key,value); } catch (_) {}
+      }
+      throw Error("No se pudo completar el lote; se ha restaurado el estado anterior. " + (error.message || ""));
+    }
+    renderCalendar();loadEntry();renderSummary();renderTrash();renderVacations();
+    return true;
   },
   redraw: function () {
     renderCalendar(); loadEntry(); renderSummary(); renderTrash(); renderVacations();
