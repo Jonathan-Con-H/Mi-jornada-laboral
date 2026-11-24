@@ -6,6 +6,9 @@ on:
       - .github/workflows/android-release-para-firma.yml
       - tests/documentos.test.cjs
       - tests/android.test.js
+      - tests/assistant.test.js
+      - mi-jornada-assistant.js
+      - mi-jornada-gemini.js
       - app/build.gradle
       - app/src/main/java/es/mijornada/app/MainActivity.java
       - app/src/main/assets/index.html
@@ -33,13 +36,15 @@ jobs:
         run: |
           cp dashboard.css dashboard.js mi-jornada-assistant.js mi-jornada-gemini.js firebase-web-config.js app/src/main/assets/
           node --check app/src/main/assets/mi-jornada-documents.js
-          node --test tests/android.test.js tests/documentos.test.cjs
+          node --check mi-jornada-assistant.js
+          node --check mi-jornada-gemini.js
+          node --test tests/android.test.js tests/assistant.test.js tests/documentos.test.cjs
       - name: Compilar release sin firma
         run: ./gradle-8.7/bin/gradle --no-daemon assembleRelease
       - name: Guardar APK para firmar fuera de GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: Mi-Jornada-2.5-RELEASE-SIN-FIRMA
+          name: Mi-Jornada-2.7-RELEASE-SIN-FIRMA
           path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
           retention-days: 7
